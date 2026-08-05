@@ -10,7 +10,7 @@ const I18N = {
     lang: "th-TH",
     defaults: { a: "สินค้า A", b: "สินค้า B" },
     text: {
-      title: "Jocha Compare Price",
+      title: "Jocha Compares Prices",
       eyebrow: "Value Calculator",
       subtitle: "เปรียบเทียบ 2 สินค้าด้วยราคาและปริมาตร เพื่อดูว่าชิ้นไหนคุ้มกว่า และคุ้มกว่ากี่เปอร์เซ็นต์",
       unitLabel: "หน่วยปริมาตร (ใช้หน่วยเดียวกันทั้งสองสินค้า)",
@@ -47,7 +47,7 @@ const I18N = {
     lang: "en-US",
     defaults: { a: "Product A", b: "Product B" },
     text: {
-      title: "Jocha Compare Price",
+      title: "Jocha Compares Prices",
       eyebrow: "Value Calculator",
       subtitle: "Compare two products by price and volume to find which one gives better value and by what percent.",
       unitLabel: "Volume unit (use the same unit for both products)",

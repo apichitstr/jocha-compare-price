@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jocha Compare Price</title>
+  <title>Jocha Compares Prices</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -20,14 +20,31 @@
           <button id="langEN" type="button" class="lang-btn">EN</button>
         </div>
       </div>
-      <h1>Jocha Compare Price</h1>
+      <h1>Jocha Compares Prices</h1>
       <p class="subtitle" id="subtitleText">เปรียบเทียบ 2 สินค้าด้วยราคาและปริมาตร เพื่อดูว่าชิ้นไหนคุ้มกว่า และคุ้มกว่ากี่เปอร์เซ็นต์</p>
     </header>
 
     <section class="controls">
       <div class="unit-row">
         <label for="unitLabel" id="unitLabelText">หน่วยปริมาตร (ใช้หน่วยเดียวกันทั้งสองสินค้า)</label>
-        <input id="unitLabel" type="text" value="ml" maxlength="10" />
+        <select id="unitLabel">
+          <option value="ml" selected>ml (milliliter)</option>
+          <option value="l">L (liter)</option>
+          <option value="fl oz">fl oz (fluid ounce)</option>
+          <option value="cup">cup</option>
+          <option value="tbsp">tbsp (tablespoon)</option>
+          <option value="tsp">tsp (teaspoon)</option>
+          <option value="cc">cc</option>
+          <option value="g">g (gram)</option>
+          <option value="kg">kg (kilogram)</option>
+          <option value="oz">oz (ounce)</option>
+          <option value="lb">lb (pound)</option>
+          <option value="piece">piece</option>
+          <option value="pack">pack</option>
+          <option value="sheet">sheet</option>
+          <option value="m">m (meter)</option>
+          <option value="cm">cm (centimeter)</option>
+        </select>
       </div>
 
       <div class="cards">
