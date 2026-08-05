@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jocha Compare Price</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <main class="app-shell">
+    <header class="hero">
+      <div class="topbar">
+        <p class="eyebrow" id="eyebrowText">Value Calculator</p>
+        <div class="lang-switch" role="group" aria-label="Language switch">
+          <button id="langTH" type="button" class="lang-btn active">TH</button>
+          <button id="langEN" type="button" class="lang-btn">EN</button>
+        </div>
+      </div>
+      <h1>Jocha Compare Price</h1>
+      <p class="subtitle" id="subtitleText">เปรียบเทียบ 2 สินค้าด้วยราคาและปริมาตร เพื่อดูว่าชิ้นไหนคุ้มกว่า และคุ้มกว่ากี่เปอร์เซ็นต์</p>
+    </header>
+
+    <section class="controls">
+      <div class="unit-row">
+        <label for="unitLabel" id="unitLabelText">หน่วยปริมาตร (ใช้หน่วยเดียวกันทั้งสองสินค้า)</label>
+        <input id="unitLabel" type="text" value="ml" maxlength="10" />
+      </div>
+
+      <div class="cards">
+        <article class="product-card" id="cardA">
+          <h2 id="productATitle">สินค้า A</h2>
+          <div class="field">
+            <label for="nameA" id="nameALabel">ชื่อสินค้า</label>
+            <input id="nameA" type="text" value="สินค้า A" />
+          </div>
+          <div class="field">
+            <label for="priceA" id="priceALabel">ราคา (บาท)</label>
+            <input id="priceA" type="number" min="0" step="0.01" placeholder="เช่น 129" />
+          </div>
+          <div class="field">
+            <label for="volumeA" id="volumeALabel">ปริมาตรต่อชิ้น</label>
+            <input id="volumeA" type="number" min="0" step="0.01" placeholder="เช่น 350" />
+          </div>
+          <fieldset class="field mode-group">
+            <legend id="modeALegend">โหมดสินค้า</legend>
+            <label id="modeASingleLabel"><input type="radio" name="modeA" value="single" checked /> ชิ้นเดียว</label>
+            <label id="modeAPackLabel"><input type="radio" name="modeA" value="pack" /> แบบแพ็ก</label>
+          </fieldset>
+          <div class="field" id="packWrapA">
+            <label for="qtyA" id="qtyALabel">จำนวนชิ้นในแพ็ก</label>
+            <input id="qtyA" type="number" min="1" step="1" value="1" disabled />
+          </div>
+        </article>
+
+        <article class="product-card" id="cardB">
+          <h2 id="productBTitle">สินค้า B</h2>
+          <div class="field">
+            <label for="nameB" id="nameBLabel">ชื่อสินค้า</label>
+            <input id="nameB" type="text" value="สินค้า B" />
+          </div>
+          <div class="field">
+            <label for="priceB" id="priceBLabel">ราคา (บาท)</label>
+            <input id="priceB" type="number" min="0" step="0.01" placeholder="เช่น 159" />
+          </div>
+          <div class="field">
+            <label for="volumeB" id="volumeBLabel">ปริมาตรต่อชิ้น</label>
+            <input id="volumeB" type="number" min="0" step="0.01" placeholder="เช่น 500" />
+          </div>
+          <fieldset class="field mode-group">
+            <legend id="modeBLegend">โหมดสินค้า</legend>
+            <label id="modeBSingleLabel"><input type="radio" name="modeB" value="single" checked /> ชิ้นเดียว</label>
+            <label id="modeBPackLabel"><input type="radio" name="modeB" value="pack" /> แบบแพ็ก</label>
+          </fieldset>
+          <div class="field" id="packWrapB">
+            <label for="qtyB" id="qtyBLabel">จำนวนชิ้นในแพ็ก</label>
+            <input id="qtyB" type="number" min="1" step="1" value="1" disabled />
+          </div>
+        </article>
+      </div>
+
+      <div class="actions">
+        <button id="calcBtn" type="button">คำนวณความคุ้มค่า</button>
+        <button id="resetBtn" type="button" class="ghost">ล้างค่า</button>
+      </div>
+    </section>
+
+    <section class="results" id="results" aria-live="polite">
+      <h3 id="resultTitle">ผลการเปรียบเทียบ</h3>
+      <div class="result-grid">
+        <div class="metric">
+          <p class="metric-title" id="cpuATitle">ต้นทุนต่อหน่วยของ A</p>
+          <p class="metric-value" id="cpuA">-</p>
+        </div>
+        <div class="metric">
+          <p class="metric-title" id="cpuBTitle">ต้นทุนต่อหน่วยของ B</p>
+          <p class="metric-value" id="cpuB">-</p>
+        </div>
+        <div class="metric wide">
+          <p class="metric-title" id="summaryTitle">สรุป</p>
+          <p class="summary" id="summaryText">กรอกข้อมูลแล้วกดคำนวณ</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="history" id="historySection">
+      <div class="history-head">
+        <h3 id="historyTitle">ประวัติการคำนวณ</h3>
+        <button id="clearHistoryBtn" type="button" class="ghost">ล้างประวัติ</button>
+      </div>
+      <ul id="historyList" class="history-list">
+        <li class="history-empty" id="historyEmpty">ยังไม่มีประวัติการคำนวณ</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
