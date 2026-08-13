@@ -1,5 +1,6 @@
 const STORAGE_KEYS = {
   lang: "jocha_compare_lang",
+  theme: "jocha_compare_theme",
   history: "jocha_compare_history",
 };
 
@@ -13,7 +14,7 @@ const I18N = {
       title: "Jocha Compares Prices",
       eyebrow: "Value Calculator",
       subtitle: "เปรียบเทียบ 2 สินค้าด้วยราคาและปริมาตร เพื่อดูว่าชิ้นไหนคุ้มกว่า และคุ้มกว่ากี่เปอร์เซ็นต์",
-      unitLabel: "หน่วยปริมาตร (ใช้หน่วยเดียวกันทั้งสองสินค้า)",
+      unitPerItem: "หน่วยต่อชิ้น",
       productA: "สินค้า A",
       productB: "สินค้า B",
       name: "ชื่อสินค้า",
@@ -36,11 +37,15 @@ const I18N = {
       unitFallback: "หน่วย",
       bahtPer: "บาท /",
       badInput: "กรุณากรอกข้อมูลราคา ปริมาตร และจำนวนชิ้นให้ถูกต้อง (มากกว่า 0)",
+      badUnit: "หน่วยของสินค้าไม่อยู่ในระบบที่รองรับ",
+      unitMismatch: "หน่วยของสินค้า 2 ชิ้นนี้เทียบกันไม่ได้โดยตรง (เช่น ของเหลวกับน้ำหนัก)",
       productPrefix: "สินค้า",
       historyTitle: "ประวัติการคำนวณ",
       historyClear: "ล้างประวัติ",
       historyEmpty: "ยังไม่มีประวัติการคำนวณ",
       historyAt: "เวลา",
+      themeLight: "Light",
+      themeDark: "Dark",
     },
   },
   en: {
@@ -50,7 +55,7 @@ const I18N = {
       title: "Jocha Compares Prices",
       eyebrow: "Value Calculator",
       subtitle: "Compare two products by price and volume to find which one gives better value and by what percent.",
-      unitLabel: "Volume unit (use the same unit for both products)",
+      unitPerItem: "Unit per item",
       productA: "Product A",
       productB: "Product B",
       name: "Product name",
@@ -73,22 +78,26 @@ const I18N = {
       unitFallback: "unit",
       bahtPer: "THB /",
       badInput: "Please provide valid price, volume, and quantity values (greater than 0)",
+      badUnit: "The selected unit is not supported",
+      unitMismatch: "These units cannot be compared directly (for example, liquid volume vs weight)",
       productPrefix: "Product",
       historyTitle: "Calculation History",
       historyClear: "Clear history",
       historyEmpty: "No calculation history yet",
       historyAt: "Time",
+      themeLight: "Light",
+      themeDark: "Dark",
     },
   },
 };
 
 let currentLang = "th";
+let currentTheme = "light";
 let calculationHistory = [];
 
 const ELEMENT_IDS = {
   eyebrowText: "eyebrow",
   subtitleText: "subtitle",
-  unitLabelText: "unitLabel",
   productATitle: "productA",
   productBTitle: "productB",
   nameALabel: "name",
@@ -97,6 +106,8 @@ const ELEMENT_IDS = {
   priceBLabel: "price",
   volumeALabel: "volume",
   volumeBLabel: "volume",
+  unitALabel: "unitPerItem",
+  unitBLabel: "unitPerItem",
   modeALegend: "mode",
   modeBLegend: "mode",
   modeASingleLabel: "modeSingle",
@@ -114,6 +125,34 @@ const ELEMENT_IDS = {
   historyTitle: "historyTitle",
   clearHistoryBtn: "historyClear",
   historyEmpty: "historyEmpty",
+  themeLight: "themeLight",
+  themeDark: "themeDark",
+};
+
+const UNIT_MAP = {
+  ml: { dimension: "volume", toBase: 1 },
+  l: { dimension: "volume", toBase: 1000 },
+  "fl oz": { dimension: "volume", toBase: 29.5735 },
+  cup: { dimension: "volume", toBase: 240 },
+  tbsp: { dimension: "volume", toBase: 15 },
+  tsp: { dimension: "volume", toBase: 5 },
+  cc: { dimension: "volume", toBase: 1 },
+  g: { dimension: "weight", toBase: 1 },
+  kg: { dimension: "weight", toBase: 1000 },
+  oz: { dimension: "weight", toBase: 28.3495 },
+  lb: { dimension: "weight", toBase: 453.592 },
+  piece: { dimension: "count", toBase: 1 },
+  pack: { dimension: "count", toBase: 1 },
+  sheet: { dimension: "count", toBase: 1 },
+  m: { dimension: "length", toBase: 100 },
+  cm: { dimension: "length", toBase: 1 },
+};
+
+const BASE_UNITS = {
+  volume: "ml",
+  weight: "g",
+  length: "cm",
+  count: "piece",
 };
 
 function t(key) {
@@ -124,6 +163,11 @@ function loadState() {
   const storedLang = localStorage.getItem(STORAGE_KEYS.lang);
   if (storedLang && I18N[storedLang]) {
     currentLang = storedLang;
+  }
+
+  const storedTheme = localStorage.getItem(STORAGE_KEYS.theme);
+  if (storedTheme === "light" || storedTheme === "dark") {
+    currentTheme = storedTheme;
   }
 
   try {
@@ -165,6 +209,11 @@ function applyLanguage() {
   langTH.classList.toggle("active", currentLang === "th");
   langEN.classList.toggle("active", currentLang === "en");
 
+  const themeLight = document.getElementById("themeLight");
+  const themeDark = document.getElementById("themeDark");
+  themeLight.classList.toggle("active", currentTheme === "light");
+  themeDark.classList.toggle("active", currentTheme === "dark");
+
   if (!document.getElementById("nameA").value.trim()) {
     document.getElementById("nameA").value = I18N[currentLang].defaults.a;
   }
@@ -182,6 +231,27 @@ function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem(STORAGE_KEYS.lang, lang);
   applyLanguage();
+}
+
+function applyTheme() {
+  document.body.classList.toggle("theme-dark", currentTheme === "dark");
+
+  const themeLight = document.getElementById("themeLight");
+  const themeDark = document.getElementById("themeDark");
+  if (themeLight && themeDark) {
+    themeLight.classList.toggle("active", currentTheme === "light");
+    themeDark.classList.toggle("active", currentTheme === "dark");
+  }
+}
+
+function setTheme(theme) {
+  if (theme !== "light" && theme !== "dark") {
+    return;
+  }
+
+  currentTheme = theme;
+  localStorage.setItem(STORAGE_KEYS.theme, theme);
+  applyTheme();
 }
 
 function formatNumber(num, digits = 2) {
@@ -216,6 +286,8 @@ function getProductData(prefix) {
   const price = parsePositiveNumber(`price${prefix}`);
   const volume = parsePositiveNumber(`volume${prefix}`);
   const qty = effectiveQty(`mode${prefix}`, `qty${prefix}`);
+  const unit = document.getElementById(`unit${prefix}`).value;
+  const unitMeta = UNIT_MAP[unit];
   const fallbackName = `${t("productPrefix")} ${prefix}`;
   const name = document.getElementById(`name${prefix}`).value.trim() || fallbackName;
 
@@ -223,15 +295,23 @@ function getProductData(prefix) {
     return { error: t("badInput") };
   }
 
+  if (!unitMeta) {
+    return { error: t("badUnit") };
+  }
+
   const totalVolume = volume * qty;
-  const costPerUnit = price / totalVolume;
+  const totalVolumeBase = totalVolume * unitMeta.toBase;
+  const costPerUnit = price / totalVolumeBase;
 
   return {
     name,
     price,
     volume,
+    unit,
+    unitMeta,
     qty,
     totalVolume,
+    totalVolumeBase,
     costPerUnit,
   };
 }
@@ -351,8 +431,6 @@ function clearHistory() {
 function calculate() {
   const a = getProductData("A");
   const b = getProductData("B");
-  const unitLabelRaw = document.getElementById("unitLabel").value.trim();
-  const unitLabel = unitLabelRaw || t("unitFallback");
 
   if (a.error) {
     showError(`${t("productA")}: ${a.error}`);
@@ -364,11 +442,18 @@ function calculate() {
     return;
   }
 
+  if (a.unitMeta.dimension !== b.unitMeta.dimension) {
+    showError(t("unitMismatch"));
+    return;
+  }
+
+  const unitLabel = BASE_UNITS[a.unitMeta.dimension] || t("unitFallback");
+
   const result = renderResult(a, b, unitLabel);
   addHistoryEntry({
     time: new Date().toISOString(),
     summary: result.summary,
-    unitInfo: `${a.name} vs ${b.name}, ${unitLabel}`,
+    unitInfo: `${a.name} (${a.unit}) vs ${b.name} (${b.unit}), ${unitLabel}`,
     lang: currentLang,
   });
 }
@@ -380,7 +465,8 @@ function resetForm() {
   document.getElementById("priceB").value = "";
   document.getElementById("volumeA").value = "";
   document.getElementById("volumeB").value = "";
-  document.getElementById("unitLabel").value = "ml";
+  document.getElementById("unitA").value = "ml";
+  document.getElementById("unitB").value = "ml";
   document.querySelector('input[name="modeA"][value="single"]').checked = true;
   document.querySelector('input[name="modeB"][value="single"]').checked = true;
   document.getElementById("qtyA").value = "1";
@@ -397,6 +483,7 @@ function resetForm() {
 
 function init() {
   loadState();
+  applyTheme();
   bindModeToggle("A");
   bindModeToggle("B");
   applyLanguage();
@@ -407,6 +494,8 @@ function init() {
   document.getElementById("clearHistoryBtn").addEventListener("click", clearHistory);
   document.getElementById("langTH").addEventListener("click", () => setLanguage("th"));
   document.getElementById("langEN").addEventListener("click", () => setLanguage("en"));
+  document.getElementById("themeLight").addEventListener("click", () => setTheme("light"));
+  document.getElementById("themeDark").addEventListener("click", () => setTheme("dark"));
 }
 
 init();

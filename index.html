@@ -15,9 +15,15 @@
     <header class="hero">
       <div class="topbar">
         <p class="eyebrow" id="eyebrowText">Value Calculator</p>
-        <div class="lang-switch" role="group" aria-label="Language switch">
-          <button id="langTH" type="button" class="lang-btn active">TH</button>
-          <button id="langEN" type="button" class="lang-btn">EN</button>
+        <div class="switch-cluster">
+          <div class="theme-switch" role="group" aria-label="Theme switch">
+            <button id="themeLight" type="button" class="theme-btn active">Light</button>
+            <button id="themeDark" type="button" class="theme-btn">Dark</button>
+          </div>
+          <div class="lang-switch" role="group" aria-label="Language switch">
+            <button id="langTH" type="button" class="lang-btn active">TH</button>
+            <button id="langEN" type="button" class="lang-btn">EN</button>
+          </div>
         </div>
       </div>
       <h1>Jocha Compares Prices</h1>
@@ -25,28 +31,6 @@
     </header>
 
     <section class="controls">
-      <div class="unit-row">
-        <label for="unitLabel" id="unitLabelText">หน่วยปริมาตร (ใช้หน่วยเดียวกันทั้งสองสินค้า)</label>
-        <select id="unitLabel">
-          <option value="ml" selected>ml (milliliter)</option>
-          <option value="l">L (liter)</option>
-          <option value="fl oz">fl oz (fluid ounce)</option>
-          <option value="cup">cup</option>
-          <option value="tbsp">tbsp (tablespoon)</option>
-          <option value="tsp">tsp (teaspoon)</option>
-          <option value="cc">cc</option>
-          <option value="g">g (gram)</option>
-          <option value="kg">kg (kilogram)</option>
-          <option value="oz">oz (ounce)</option>
-          <option value="lb">lb (pound)</option>
-          <option value="piece">piece</option>
-          <option value="pack">pack</option>
-          <option value="sheet">sheet</option>
-          <option value="m">m (meter)</option>
-          <option value="cm">cm (centimeter)</option>
-        </select>
-      </div>
-
       <div class="cards">
         <article class="product-card" id="cardA">
           <h2 id="productATitle">สินค้า A</h2>
@@ -61,6 +45,27 @@
           <div class="field">
             <label for="volumeA" id="volumeALabel">ปริมาตรต่อชิ้น</label>
             <input id="volumeA" type="number" min="0" step="0.01" placeholder="เช่น 350" />
+          </div>
+          <div class="field">
+            <label for="unitA" id="unitALabel">หน่วยต่อชิ้น</label>
+            <select id="unitA">
+              <option value="ml" selected>ml (milliliter)</option>
+              <option value="l">L (liter)</option>
+              <option value="fl oz">fl oz (fluid ounce)</option>
+              <option value="cup">cup</option>
+              <option value="tbsp">tbsp (tablespoon)</option>
+              <option value="tsp">tsp (teaspoon)</option>
+              <option value="cc">cc</option>
+              <option value="g">g (gram)</option>
+              <option value="kg">kg (kilogram)</option>
+              <option value="oz">oz (ounce)</option>
+              <option value="lb">lb (pound)</option>
+              <option value="piece">piece</option>
+              <option value="pack">pack</option>
+              <option value="sheet">sheet</option>
+              <option value="m">m (meter)</option>
+              <option value="cm">cm (centimeter)</option>
+            </select>
           </div>
           <fieldset class="field mode-group">
             <legend id="modeALegend">โหมดสินค้า</legend>
@@ -86,6 +91,27 @@
           <div class="field">
             <label for="volumeB" id="volumeBLabel">ปริมาตรต่อชิ้น</label>
             <input id="volumeB" type="number" min="0" step="0.01" placeholder="เช่น 500" />
+          </div>
+          <div class="field">
+            <label for="unitB" id="unitBLabel">หน่วยต่อชิ้น</label>
+            <select id="unitB">
+              <option value="ml" selected>ml (milliliter)</option>
+              <option value="l">L (liter)</option>
+              <option value="fl oz">fl oz (fluid ounce)</option>
+              <option value="cup">cup</option>
+              <option value="tbsp">tbsp (tablespoon)</option>
+              <option value="tsp">tsp (teaspoon)</option>
+              <option value="cc">cc</option>
+              <option value="g">g (gram)</option>
+              <option value="kg">kg (kilogram)</option>
+              <option value="oz">oz (ounce)</option>
+              <option value="lb">lb (pound)</option>
+              <option value="piece">piece</option>
+              <option value="pack">pack</option>
+              <option value="sheet">sheet</option>
+              <option value="m">m (meter)</option>
+              <option value="cm">cm (centimeter)</option>
+            </select>
           </div>
           <fieldset class="field mode-group">
             <legend id="modeBLegend">โหมดสินค้า</legend>
