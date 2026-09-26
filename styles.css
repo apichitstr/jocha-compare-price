@@ -248,6 +248,12 @@ h1 {
   margin-bottom: 10px;
 }
 
+.coupon-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: 8px;
+}
+
 label,
 legend {
   font-size: 0.92rem;

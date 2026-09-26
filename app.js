@@ -19,6 +19,10 @@ const I18N = {
       productB: "สินค้า B",
       name: "ชื่อสินค้า",
       price: "ราคา (บาท)",
+      coupon: "ส่วนลดคูปอง",
+      couponUnitBaht: "บาท",
+      couponTypeA: "หน่วยส่วนลดคูปองสินค้า A",
+      couponTypeB: "หน่วยส่วนลดคูปองสินค้า B",
       volume: "ปริมาตรต่อชิ้น",
       mode: "โหมดสินค้า",
       modeSingle: "ชิ้นเดียว",
@@ -29,6 +33,7 @@ const I18N = {
       resultTitle: "ผลการเปรียบเทียบ",
       cpuA: "ต้นทุนต่อหน่วยของ A",
       cpuB: "ต้นทุนต่อหน่วยของ B",
+      afterCoupon: "หลังหักคูปอง",
       summaryTitle: "สรุป",
       summaryIdle: "กรอกข้อมูลแล้วกดคำนวณ",
       tie: "ความคุ้มค่าเท่ากันพอดี",
@@ -60,6 +65,10 @@ const I18N = {
       productB: "Product B",
       name: "Product name",
       price: "Price (THB)",
+      coupon: "Coupon discount",
+      couponUnitBaht: "THB",
+      couponTypeA: "Coupon discount unit for product A",
+      couponTypeB: "Coupon discount unit for product B",
       volume: "Volume per item",
       mode: "Product mode",
       modeSingle: "Single item",
@@ -70,6 +79,7 @@ const I18N = {
       resultTitle: "Comparison Result",
       cpuA: "Cost per unit of A",
       cpuB: "Cost per unit of B",
+      afterCoupon: "after coupon",
       summaryTitle: "Summary",
       summaryIdle: "Fill in values and click calculate",
       tie: "Both products have equal value",
@@ -104,6 +114,10 @@ const ELEMENT_IDS = {
   nameBLabel: "name",
   priceALabel: "price",
   priceBLabel: "price",
+  couponALabel: "coupon",
+  couponBLabel: "coupon",
+  couponAmountA: "couponUnitBaht",
+  couponAmountB: "couponUnitBaht",
   volumeALabel: "volume",
   volumeBLabel: "volume",
   unitALabel: "unitPerItem",
@@ -204,6 +218,9 @@ function applyLanguage() {
     el.textContent = t(key);
   });
 
+  document.getElementById("couponTypeA").setAttribute("aria-label", t("couponTypeA"));
+  document.getElementById("couponTypeB").setAttribute("aria-label", t("couponTypeB"));
+
   const langTH = document.getElementById("langTH");
   const langEN = document.getElementById("langEN");
   langTH.classList.toggle("active", currentLang === "th");
@@ -284,6 +301,9 @@ function effectiveQty(modeName, qtyId) {
 
 function getProductData(prefix) {
   const price = parsePositiveNumber(`price${prefix}`);
+  const couponRaw = document.getElementById(`coupon${prefix}`).value;
+  const couponValue = couponRaw === "" ? 0 : Number(couponRaw);
+  const couponType = document.getElementById(`couponType${prefix}`).value;
   const volume = parsePositiveNumber(`volume${prefix}`);
   const qty = effectiveQty(`mode${prefix}`, `qty${prefix}`);
   const unit = document.getElementById(`unit${prefix}`).value;
@@ -291,7 +311,7 @@ function getProductData(prefix) {
   const fallbackName = `${t("productPrefix")} ${prefix}`;
   const name = document.getElementById(`name${prefix}`).value.trim() || fallbackName;
 
-  if (!price || !volume || !qty) {
+  if (!price || !volume || !qty || !Number.isFinite(couponValue) || couponValue < 0 || (couponType === "percent" && couponValue > 100)) {
     return { error: t("badInput") };
   }
 
@@ -301,11 +321,16 @@ function getProductData(prefix) {
 
   const totalVolume = volume * qty;
   const totalVolumeBase = totalVolume * unitMeta.toBase;
-  const costPerUnit = price / totalVolumeBase;
+  const couponDiscount = couponType === "percent" ? price * couponValue / 100 : couponValue;
+  const finalPrice = Math.max(0, price - couponDiscount);
+  const costPerUnit = finalPrice / totalVolumeBase;
 
   return {
     name,
     price,
+    couponValue,
+    couponType,
+    finalPrice,
     volume,
     unit,
     unitMeta,
@@ -330,8 +355,8 @@ function renderResult(a, b, unitLabel) {
   const cpuB = document.getElementById("cpuB");
   const summary = document.getElementById("summaryText");
 
-  cpuA.textContent = `${formatNumber(a.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel}`;
-  cpuB.textContent = `${formatNumber(b.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel}`;
+  cpuA.textContent = `${formatNumber(a.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel} (${t("afterCoupon")}: ${formatNumber(a.finalPrice)} ${t("couponUnitBaht")})`;
+  cpuB.textContent = `${formatNumber(b.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel} (${t("afterCoupon")}: ${formatNumber(b.finalPrice)} ${t("couponUnitBaht")})`;
 
   summary.classList.remove("win", "tie", "error");
 
@@ -463,6 +488,10 @@ function resetForm() {
   document.getElementById("nameB").value = I18N[currentLang].defaults.b;
   document.getElementById("priceA").value = "";
   document.getElementById("priceB").value = "";
+  document.getElementById("couponA").value = "";
+  document.getElementById("couponB").value = "";
+  document.getElementById("couponTypeA").value = "percent";
+  document.getElementById("couponTypeB").value = "percent";
   document.getElementById("volumeA").value = "";
   document.getElementById("volumeB").value = "";
   document.getElementById("unitA").value = "ml";
