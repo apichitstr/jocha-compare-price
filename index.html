@@ -57,8 +57,14 @@
             <input id="volumeA" type="number" min="0" step="0.01" placeholder="เช่น 350" />
           </div>
           <div class="field">
-            <label for="factorA" id="factorALabel">ความยาวเทียบปกติ (เท่า)</label>
-            <input id="factorA" type="number" min="0.01" step="0.1" value="1.0" />
+            <label class="factor-toggle" for="factorEnabledA">
+              <input id="factorEnabledA" type="checkbox" />
+              <span id="factorToggleALabel">กำหนดความยาวเทียบปกติ</span>
+            </label>
+            <div id="factorWrapA" class="factor-input" hidden>
+              <label for="factorA" id="factorALabel">ความยาวเทียบปกติ (เท่า)</label>
+              <input id="factorA" type="number" min="0.01" step="0.1" value="1.0" />
+            </div>
           </div>
           <div class="field">
             <label for="unitA" id="unitALabel">หน่วยต่อชิ้น</label>
@@ -117,8 +123,14 @@
             <input id="volumeB" type="number" min="0" step="0.01" placeholder="เช่น 500" />
           </div>
           <div class="field">
-            <label for="factorB" id="factorBLabel">ความยาวเทียบปกติ (เท่า)</label>
-            <input id="factorB" type="number" min="0.01" step="0.1" value="1.0" />
+            <label class="factor-toggle" for="factorEnabledB">
+              <input id="factorEnabledB" type="checkbox" />
+              <span id="factorToggleBLabel">กำหนดความยาวเทียบปกติ</span>
+            </label>
+            <div id="factorWrapB" class="factor-input" hidden>
+              <label for="factorB" id="factorBLabel">ความยาวเทียบปกติ (เท่า)</label>
+              <input id="factorB" type="number" min="0.01" step="0.1" value="1.0" />
+            </div>
           </div>
           <div class="field">
             <label for="unitB" id="unitBLabel">หน่วยต่อชิ้น</label>

@@ -24,6 +24,7 @@ const I18N = {
       couponTypeA: "หน่วยส่วนลดคูปองสินค้า A",
       couponTypeB: "หน่วยส่วนลดคูปองสินค้า B",
       volume: "ปริมาตรต่อชิ้น",
+      factorToggle: "กำหนดความยาวเทียบปกติ",
       factor: "ความยาวเทียบปกติ (เท่า)",
       mode: "โหมดสินค้า",
       modeSingle: "ชิ้นเดียว",
@@ -71,6 +72,7 @@ const I18N = {
       couponTypeA: "Coupon discount unit for product A",
       couponTypeB: "Coupon discount unit for product B",
       volume: "Volume per item",
+      factorToggle: "Set length multiplier",
       factor: "Length vs standard (x)",
       mode: "Product mode",
       modeSingle: "Single item",
@@ -122,6 +124,8 @@ const ELEMENT_IDS = {
   couponAmountB: "couponUnitBaht",
   volumeALabel: "volume",
   volumeBLabel: "volume",
+  factorToggleALabel: "factorToggle",
+  factorToggleBLabel: "factorToggle",
   factorALabel: "factor",
   factorBLabel: "factor",
   unitALabel: "unitPerItem",
@@ -309,7 +313,8 @@ function getProductData(prefix) {
   const couponValue = couponRaw === "" ? 0 : Number(couponRaw);
   const couponType = document.getElementById(`couponType${prefix}`).value;
   const volume = parsePositiveNumber(`volume${prefix}`);
-  const factorRaw = document.getElementById(`factor${prefix}`).value;
+  const factorEnabled = document.getElementById(`factorEnabled${prefix}`).checked;
+  const factorRaw = factorEnabled ? document.getElementById(`factor${prefix}`).value : "1";
   const factor = factorRaw === "" ? 1 : Number(factorRaw);
   const qty = effectiveQty(`mode${prefix}`, `qty${prefix}`);
   const unit = document.getElementById(`unit${prefix}`).value;
@@ -413,6 +418,16 @@ function bindModeToggle(prefix) {
   refresh();
 }
 
+function updateFactorVisibility(prefix) {
+  const enabled = document.getElementById(`factorEnabled${prefix}`).checked;
+  document.getElementById(`factorWrap${prefix}`).hidden = !enabled;
+}
+
+function bindFactorToggle(prefix) {
+  document.getElementById(`factorEnabled${prefix}`).addEventListener("change", () => updateFactorVisibility(prefix));
+  updateFactorVisibility(prefix);
+}
+
 function addHistoryEntry(entry) {
   calculationHistory.unshift(entry);
   if (calculationHistory.length > MAX_HISTORY) {
@@ -503,6 +518,10 @@ function resetForm() {
   document.getElementById("volumeB").value = "";
   document.getElementById("factorA").value = "1.0";
   document.getElementById("factorB").value = "1.0";
+  document.getElementById("factorEnabledA").checked = false;
+  document.getElementById("factorEnabledB").checked = false;
+  updateFactorVisibility("A");
+  updateFactorVisibility("B");
   document.getElementById("unitA").value = "ml";
   document.getElementById("unitB").value = "ml";
   document.querySelector('input[name="modeA"][value="single"]').checked = true;
@@ -524,6 +543,8 @@ function init() {
   applyTheme();
   bindModeToggle("A");
   bindModeToggle("B");
+  bindFactorToggle("A");
+  bindFactorToggle("B");
   applyLanguage();
   resetForm();
 
