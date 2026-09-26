@@ -24,6 +24,7 @@ const I18N = {
       couponTypeA: "หน่วยส่วนลดคูปองสินค้า A",
       couponTypeB: "หน่วยส่วนลดคูปองสินค้า B",
       volume: "ปริมาตรต่อชิ้น",
+      factor: "ความยาวเทียบปกติ (เท่า)",
       mode: "โหมดสินค้า",
       modeSingle: "ชิ้นเดียว",
       modePack: "แบบแพ็ก",
@@ -70,6 +71,7 @@ const I18N = {
       couponTypeA: "Coupon discount unit for product A",
       couponTypeB: "Coupon discount unit for product B",
       volume: "Volume per item",
+      factor: "Length vs standard (x)",
       mode: "Product mode",
       modeSingle: "Single item",
       modePack: "Pack",
@@ -120,6 +122,8 @@ const ELEMENT_IDS = {
   couponAmountB: "couponUnitBaht",
   volumeALabel: "volume",
   volumeBLabel: "volume",
+  factorALabel: "factor",
+  factorBLabel: "factor",
   unitALabel: "unitPerItem",
   unitBLabel: "unitPerItem",
   modeALegend: "mode",
@@ -305,13 +309,15 @@ function getProductData(prefix) {
   const couponValue = couponRaw === "" ? 0 : Number(couponRaw);
   const couponType = document.getElementById(`couponType${prefix}`).value;
   const volume = parsePositiveNumber(`volume${prefix}`);
+  const factorRaw = document.getElementById(`factor${prefix}`).value;
+  const factor = factorRaw === "" ? 1 : Number(factorRaw);
   const qty = effectiveQty(`mode${prefix}`, `qty${prefix}`);
   const unit = document.getElementById(`unit${prefix}`).value;
   const unitMeta = UNIT_MAP[unit];
   const fallbackName = `${t("productPrefix")} ${prefix}`;
   const name = document.getElementById(`name${prefix}`).value.trim() || fallbackName;
 
-  if (!price || !volume || !qty || !Number.isFinite(couponValue) || couponValue < 0 || (couponType === "percent" && couponValue > 100)) {
+  if (!price || !volume || !qty || !Number.isFinite(factor) || factor <= 0 || !Number.isFinite(couponValue) || couponValue < 0 || (couponType === "percent" && couponValue > 100)) {
     return { error: t("badInput") };
   }
 
@@ -319,7 +325,7 @@ function getProductData(prefix) {
     return { error: t("badUnit") };
   }
 
-  const totalVolume = volume * qty;
+  const totalVolume = volume * qty * factor;
   const totalVolumeBase = totalVolume * unitMeta.toBase;
   const couponDiscount = couponType === "percent" ? price * couponValue / 100 : couponValue;
   const finalPrice = Math.max(0, price - couponDiscount);
@@ -332,6 +338,7 @@ function getProductData(prefix) {
     couponType,
     finalPrice,
     volume,
+    factor,
     unit,
     unitMeta,
     qty,
@@ -494,6 +501,8 @@ function resetForm() {
   document.getElementById("couponTypeB").value = "percent";
   document.getElementById("volumeA").value = "";
   document.getElementById("volumeB").value = "";
+  document.getElementById("factorA").value = "1.0";
+  document.getElementById("factorB").value = "1.0";
   document.getElementById("unitA").value = "ml";
   document.getElementById("unitB").value = "ml";
   document.querySelector('input[name="modeA"][value="single"]').checked = true;
