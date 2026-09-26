@@ -165,7 +165,8 @@ h1 {
 }
 
 .lang-switch,
-.theme-switch {
+.theme-switch,
+.compare-switch {
   display: inline-flex;
   background: var(--switch-bg);
   border: 1px solid var(--switch-border);
@@ -174,7 +175,8 @@ h1 {
 }
 
 .lang-btn,
-.theme-btn {
+.theme-btn,
+.compare-mode {
   border: 0;
   border-radius: 999px;
   padding: 6px 12px;
@@ -184,8 +186,16 @@ h1 {
   color: var(--switch-text);
 }
 
+.compare-mode {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 0.86rem;
+}
+
 .lang-btn.active,
-.theme-btn.active {
+.theme-btn.active,
+.compare-mode.active {
   background: linear-gradient(90deg, #2a96ff, #16b8a8);
   color: #fff;
 }
@@ -215,6 +225,10 @@ h1 {
   display: grid;
   grid-template-columns: repeat(2, minmax(240px, 1fr));
   gap: 14px;
+}
+
+.three-product-mode .cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .product-card {
@@ -412,6 +426,10 @@ button.ghost {
   gap: 12px;
 }
 
+.three-product-mode .result-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .metric {
   background: var(--metric-bg);
   border-radius: 12px;
@@ -439,6 +457,7 @@ button.ghost {
   margin: 7px 0 0;
   font-size: 1.02rem;
   line-height: 1.35;
+  white-space: pre-line;
 }
 
 .summary.win {
@@ -472,7 +491,9 @@ button.ghost {
   }
 
   .cards,
-  .result-grid {
+  .result-grid,
+  .three-product-mode .cards,
+  .three-product-mode .result-grid {
     grid-template-columns: 1fr;
   }
 }

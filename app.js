@@ -9,20 +9,25 @@ const MAX_HISTORY = 20;
 const I18N = {
   th: {
     lang: "th-TH",
-    defaults: { a: "สินค้า A", b: "สินค้า B" },
+    defaults: { a: "สินค้า A", b: "สินค้า B", c: "สินค้า C" },
     text: {
       title: "Jocha Compares Prices",
       eyebrow: "Value Calculator",
-      subtitle: "เปรียบเทียบ 2 สินค้าด้วยราคาและปริมาตร เพื่อดูว่าชิ้นไหนคุ้มกว่า และคุ้มกว่ากี่เปอร์เซ็นต์",
+      subtitleTwo: "เปรียบเทียบ 2 สินค้าด้วยราคาและปริมาณ เพื่อดูว่าชิ้นไหนคุ้มกว่า",
+      subtitleThree: "เปรียบเทียบสินค้า 3 ชิ้นด้วยต้นทุนต่อหน่วย เพื่อดูอันดับความคุ้มค่า",
+      compareTwo: "2 สินค้า",
+      compareThree: "3 สินค้า",
       unitPerItem: "หน่วยต่อชิ้น",
       productA: "สินค้า A",
       productB: "สินค้า B",
+      productC: "สินค้า C",
       name: "ชื่อสินค้า",
       price: "ราคา (บาท)",
       coupon: "ส่วนลดคูปอง",
       couponUnitBaht: "บาท",
       couponTypeA: "หน่วยส่วนลดคูปองสินค้า A",
       couponTypeB: "หน่วยส่วนลดคูปองสินค้า B",
+      couponTypeC: "หน่วยส่วนลดคูปองสินค้า C",
       volume: "ปริมาตรต่อชิ้น",
       factorToggle: "กำหนดความยาวเทียบปกติ",
       factor: "ความยาวเทียบปกติ (เท่า)",
@@ -35,6 +40,7 @@ const I18N = {
       resultTitle: "ผลการเปรียบเทียบ",
       cpuA: "ต้นทุนต่อหน่วยของ A",
       cpuB: "ต้นทุนต่อหน่วยของ B",
+      cpuC: "ต้นทุนต่อหน่วยของ C",
       afterCoupon: "หลังหักคูปอง",
       summaryTitle: "สรุป",
       summaryIdle: "กรอกข้อมูลแล้วกดคำนวณ",
@@ -45,7 +51,8 @@ const I18N = {
       bahtPer: "บาท /",
       badInput: "กรุณากรอกข้อมูลราคา ปริมาตร และจำนวนชิ้นให้ถูกต้อง (มากกว่า 0)",
       badUnit: "หน่วยของสินค้าไม่อยู่ในระบบที่รองรับ",
-      unitMismatch: "หน่วยของสินค้า 2 ชิ้นนี้เทียบกันไม่ได้โดยตรง (เช่น ของเหลวกับน้ำหนัก)",
+      unitMismatch: "หน่วยของสินค้าต้องเป็นประเภทที่เทียบกันได้ (เช่น ของเหลวกับน้ำหนักเทียบกันไม่ได้)",
+      rank: "อันดับ",
       productPrefix: "สินค้า",
       historyTitle: "ประวัติการคำนวณ",
       historyClear: "ล้างประวัติ",
@@ -57,20 +64,25 @@ const I18N = {
   },
   en: {
     lang: "en-US",
-    defaults: { a: "Product A", b: "Product B" },
+    defaults: { a: "Product A", b: "Product B", c: "Product C" },
     text: {
       title: "Jocha Compares Prices",
       eyebrow: "Value Calculator",
-      subtitle: "Compare two products by price and volume to find which one gives better value and by what percent.",
+      subtitleTwo: "Compare two products by price and quantity to find which one gives better value.",
+      subtitleThree: "Compare three products by cost per unit and see how they rank for value.",
+      compareTwo: "2 products",
+      compareThree: "3 products",
       unitPerItem: "Unit per item",
       productA: "Product A",
       productB: "Product B",
+      productC: "Product C",
       name: "Product name",
       price: "Price (THB)",
       coupon: "Coupon discount",
       couponUnitBaht: "THB",
       couponTypeA: "Coupon discount unit for product A",
       couponTypeB: "Coupon discount unit for product B",
+      couponTypeC: "Coupon discount unit for product C",
       volume: "Volume per item",
       factorToggle: "Set length multiplier",
       factor: "Length vs standard (x)",
@@ -83,6 +95,7 @@ const I18N = {
       resultTitle: "Comparison Result",
       cpuA: "Cost per unit of A",
       cpuB: "Cost per unit of B",
+      cpuC: "Cost per unit of C",
       afterCoupon: "after coupon",
       summaryTitle: "Summary",
       summaryIdle: "Fill in values and click calculate",
@@ -93,7 +106,8 @@ const I18N = {
       bahtPer: "THB /",
       badInput: "Please provide valid price, volume, and quantity values (greater than 0)",
       badUnit: "The selected unit is not supported",
-      unitMismatch: "These units cannot be compared directly (for example, liquid volume vs weight)",
+      unitMismatch: "All products must use comparable units (for example, liquid volume and weight cannot be compared directly)",
+      rank: "Rank",
       productPrefix: "Product",
       historyTitle: "Calculation History",
       historyClear: "Clear history",
@@ -111,9 +125,11 @@ let calculationHistory = [];
 
 const ELEMENT_IDS = {
   eyebrowText: "eyebrow",
-  subtitleText: "subtitle",
+  compareTwoLink: "compareTwo",
+  compareThreeLink: "compareThree",
   productATitle: "productA",
   productBTitle: "productB",
+  productCTitle: "productC",
   nameALabel: "name",
   nameBLabel: "name",
   priceALabel: "price",
@@ -138,11 +154,24 @@ const ELEMENT_IDS = {
   modeBPackLabel: "modePack",
   qtyALabel: "qty",
   qtyBLabel: "qty",
+  nameCLabel: "name",
+  priceCLabel: "price",
+  couponCLabel: "coupon",
+  couponAmountC: "couponUnitBaht",
+  volumeCLabel: "volume",
+  factorToggleCLabel: "factorToggle",
+  factorCLabel: "factor",
+  unitCLabel: "unitPerItem",
+  modeCLegend: "mode",
+  modeCSingleLabel: "modeSingle",
+  modeCPackLabel: "modePack",
+  qtyCLabel: "qty",
   calcBtn: "calcBtn",
   resetBtn: "resetBtn",
   resultTitle: "resultTitle",
   cpuATitle: "cpuA",
   cpuBTitle: "cpuB",
+  cpuCTitle: "cpuC",
   summaryTitle: "summaryTitle",
   historyTitle: "historyTitle",
   clearHistoryBtn: "historyClear",
@@ -181,6 +210,10 @@ function t(key) {
   return I18N[currentLang].text[key];
 }
 
+function getProductPrefixes() {
+  return ["A", "B", "C"].filter((prefix) => document.getElementById(`price${prefix}`));
+}
+
 function loadState() {
   const storedLang = localStorage.getItem(STORAGE_KEYS.lang);
   if (storedLang && I18N[storedLang]) {
@@ -207,6 +240,8 @@ function saveHistory() {
 function applyLanguage() {
   document.documentElement.lang = currentLang;
   document.title = t("title");
+  const prefixes = getProductPrefixes();
+  document.getElementById("subtitleText").textContent = t(prefixes.includes("C") ? "subtitleThree" : "subtitleTwo");
 
   Object.entries(ELEMENT_IDS).forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -214,7 +249,7 @@ function applyLanguage() {
       return;
     }
 
-    if (id === "modeASingleLabel" || id === "modeBSingleLabel" || id === "modeAPackLabel" || id === "modeBPackLabel") {
+    if (id.includes("Mode") || id.includes("mode") && (id.includes("SingleLabel") || id.includes("PackLabel"))) {
       const input = el.querySelector("input");
       el.textContent = ` ${t(key)}`;
       if (input) {
@@ -226,8 +261,15 @@ function applyLanguage() {
     el.textContent = t(key);
   });
 
-  document.getElementById("couponTypeA").setAttribute("aria-label", t("couponTypeA"));
-  document.getElementById("couponTypeB").setAttribute("aria-label", t("couponTypeB"));
+  prefixes.forEach((prefix) => {
+    const couponType = document.getElementById(`couponType${prefix}`);
+    if (couponType) {
+      couponType.setAttribute("aria-label", t(`couponType${prefix}`) || `${t("coupon")} ${prefix}`);
+    }
+  });
+
+  document.getElementById("compareTwoLink").classList.toggle("active", !prefixes.includes("C"));
+  document.getElementById("compareThreeLink").classList.toggle("active", prefixes.includes("C"));
 
   const langTH = document.getElementById("langTH");
   const langEN = document.getElementById("langEN");
@@ -239,12 +281,12 @@ function applyLanguage() {
   themeLight.classList.toggle("active", currentTheme === "light");
   themeDark.classList.toggle("active", currentTheme === "dark");
 
-  if (!document.getElementById("nameA").value.trim()) {
-    document.getElementById("nameA").value = I18N[currentLang].defaults.a;
-  }
-  if (!document.getElementById("nameB").value.trim()) {
-    document.getElementById("nameB").value = I18N[currentLang].defaults.b;
-  }
+  prefixes.forEach((prefix) => {
+    const nameInput = document.getElementById(`name${prefix}`);
+    if (!nameInput.value.trim()) {
+      nameInput.value = I18N[currentLang].defaults[prefix.toLowerCase()];
+    }
+  });
 
   renderHistory();
 }
@@ -355,22 +397,44 @@ function getProductData(prefix) {
 
 function showError(message) {
   const summary = document.getElementById("summaryText");
-  document.getElementById("cpuA").textContent = "-";
-  document.getElementById("cpuB").textContent = "-";
-  summary.classList.remove("win", "tie");
+  getProductPrefixes().forEach((prefix) => {
+    document.getElementById(`cpu${prefix}`).textContent = "-";
+  });
+  summary.classList.remove("win", "tie", "error");
   summary.classList.add("error");
   summary.textContent = message;
 }
 
-function renderResult(a, b, unitLabel) {
-  const cpuA = document.getElementById("cpuA");
-  const cpuB = document.getElementById("cpuB");
+function renderResult(products, unitLabel) {
   const summary = document.getElementById("summaryText");
 
-  cpuA.textContent = `${formatNumber(a.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel} (${t("afterCoupon")}: ${formatNumber(a.finalPrice)} ${t("couponUnitBaht")})`;
-  cpuB.textContent = `${formatNumber(b.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel} (${t("afterCoupon")}: ${formatNumber(b.finalPrice)} ${t("couponUnitBaht")})`;
+  products.forEach((product, index) => {
+    const prefix = ["A", "B", "C"][index];
+    document.getElementById(`cpu${prefix}`).textContent = `${formatNumber(product.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel} (${t("afterCoupon")}: ${formatNumber(product.finalPrice)} ${t("couponUnitBaht")})`;
+  });
 
   summary.classList.remove("win", "tie", "error");
+
+  if (products.length === 3) {
+    const ranked = [...products].sort((first, second) => first.costPerUnit - second.costPerUnit);
+    if (ranked.every((product) => Math.abs(product.costPerUnit - ranked[0].costPerUnit) < 1e-12)) {
+      summary.textContent = t("tie");
+      summary.classList.add("tie");
+      return { winner: null, betterPercent: 0, summary: summary.textContent };
+    }
+
+    let rank = 1;
+    summary.textContent = ranked.map((product, index) => {
+      if (index > 0 && Math.abs(product.costPerUnit - ranked[index - 1].costPerUnit) >= 1e-12) {
+        rank = index + 1;
+      }
+      return `${t("rank")} ${rank}: ${product.name}`;
+    }).join("\n");
+    summary.classList.add("win");
+    return { winner: ranked[0].name, betterPercent: null, summary: summary.textContent };
+  }
+
+  const [a, b] = products;
 
   const diff = Math.abs(a.costPerUnit - b.costPerUnit);
   if (diff < 1e-12) {
@@ -476,64 +540,54 @@ function clearHistory() {
 }
 
 function calculate() {
-  const a = getProductData("A");
-  const b = getProductData("B");
+  const products = getProductPrefixes().map((prefix) => ({
+    prefix,
+    data: getProductData(prefix),
+  }));
 
-  if (a.error) {
-    showError(`${t("productA")}: ${a.error}`);
+  const invalidProduct = products.find(({ data }) => data.error);
+  if (invalidProduct) {
+    const productName = t(`product${invalidProduct.prefix}`);
+    showError(`${productName}: ${invalidProduct.data.error}`);
     return;
   }
 
-  if (b.error) {
-    showError(`${t("productB")}: ${b.error}`);
-    return;
-  }
-
-  if (a.unitMeta.dimension !== b.unitMeta.dimension) {
+  const productData = products.map(({ data }) => data);
+  if (productData.some((product) => product.unitMeta.dimension !== productData[0].unitMeta.dimension)) {
     showError(t("unitMismatch"));
     return;
   }
 
-  const unitLabel = BASE_UNITS[a.unitMeta.dimension] || t("unitFallback");
+  const unitLabel = BASE_UNITS[productData[0].unitMeta.dimension] || t("unitFallback");
 
-  const result = renderResult(a, b, unitLabel);
+  const result = renderResult(productData, unitLabel);
+  const unitInfo = productData.map((product) => `${product.name} (${product.unit})`).join(" vs ");
   addHistoryEntry({
     time: new Date().toISOString(),
     summary: result.summary,
-    unitInfo: `${a.name} (${a.unit}) vs ${b.name} (${b.unit}), ${unitLabel}`,
+    unitInfo: `${unitInfo}, ${unitLabel}`,
     lang: currentLang,
   });
 }
 
 function resetForm() {
-  document.getElementById("nameA").value = I18N[currentLang].defaults.a;
-  document.getElementById("nameB").value = I18N[currentLang].defaults.b;
-  document.getElementById("priceA").value = "";
-  document.getElementById("priceB").value = "";
-  document.getElementById("couponA").value = "";
-  document.getElementById("couponB").value = "";
-  document.getElementById("couponTypeA").value = "percent";
-  document.getElementById("couponTypeB").value = "percent";
-  document.getElementById("volumeA").value = "";
-  document.getElementById("volumeB").value = "";
-  document.getElementById("factorA").value = "1.0";
-  document.getElementById("factorB").value = "1.0";
-  document.getElementById("factorEnabledA").checked = false;
-  document.getElementById("factorEnabledB").checked = false;
-  updateFactorVisibility("A");
-  updateFactorVisibility("B");
-  document.getElementById("unitA").value = "ml";
-  document.getElementById("unitB").value = "ml";
-  document.querySelector('input[name="modeA"][value="single"]').checked = true;
-  document.querySelector('input[name="modeB"][value="single"]').checked = true;
-  document.getElementById("qtyA").value = "1";
-  document.getElementById("qtyB").value = "1";
-  document.getElementById("qtyA").disabled = true;
-  document.getElementById("qtyB").disabled = true;
+  getProductPrefixes().forEach((prefix) => {
+    document.getElementById(`name${prefix}`).value = I18N[currentLang].defaults[prefix.toLowerCase()];
+    document.getElementById(`price${prefix}`).value = "";
+    document.getElementById(`coupon${prefix}`).value = "";
+    document.getElementById(`couponType${prefix}`).value = "percent";
+    document.getElementById(`volume${prefix}`).value = "";
+    document.getElementById(`factor${prefix}`).value = "1.0";
+    document.getElementById(`factorEnabled${prefix}`).checked = false;
+    updateFactorVisibility(prefix);
+    document.getElementById(`unit${prefix}`).value = "ml";
+    document.querySelector(`input[name="mode${prefix}"][value="single"]`).checked = true;
+    document.getElementById(`qty${prefix}`).value = "1";
+    document.getElementById(`qty${prefix}`).disabled = true;
+    document.getElementById(`cpu${prefix}`).textContent = "-";
+  });
 
   const summary = document.getElementById("summaryText");
-  document.getElementById("cpuA").textContent = "-";
-  document.getElementById("cpuB").textContent = "-";
   summary.classList.remove("win", "tie", "error");
   summary.textContent = t("summaryIdle");
 }
@@ -541,10 +595,10 @@ function resetForm() {
 function init() {
   loadState();
   applyTheme();
-  bindModeToggle("A");
-  bindModeToggle("B");
-  bindFactorToggle("A");
-  bindFactorToggle("B");
+  getProductPrefixes().forEach((prefix) => {
+    bindModeToggle(prefix);
+    bindFactorToggle(prefix);
+  });
   applyLanguage();
   resetForm();
 
