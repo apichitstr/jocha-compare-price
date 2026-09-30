@@ -396,6 +396,7 @@ function getProductData(prefix) {
 }
 
 function showError(message) {
+  document.getElementById("results").classList.remove("result-ready");
   const summary = document.getElementById("summaryText");
   getProductPrefixes().forEach((prefix) => {
     document.getElementById(`cpu${prefix}`).textContent = "-";
@@ -463,6 +464,13 @@ function renderResult(products, unitLabel) {
 
   summary.classList.add("win");
   return { winner: winner.name, betterPercent, summary: summary.textContent };
+}
+
+function animateResults() {
+  const results = document.getElementById("results");
+  results.classList.remove("result-ready");
+  void results.offsetWidth;
+  results.classList.add("result-ready");
 }
 
 function bindModeToggle(prefix) {
@@ -561,6 +569,7 @@ function calculate() {
   const unitLabel = BASE_UNITS[productData[0].unitMeta.dimension] || t("unitFallback");
 
   const result = renderResult(productData, unitLabel);
+  animateResults();
   const unitInfo = productData.map((product) => `${product.name} (${product.unit})`).join(" vs ");
   addHistoryEntry({
     time: new Date().toISOString(),
@@ -571,6 +580,7 @@ function calculate() {
 }
 
 function resetForm() {
+  document.getElementById("results").classList.remove("result-ready");
   getProductPrefixes().forEach((prefix) => {
     document.getElementById(`name${prefix}`).value = I18N[currentLang].defaults[prefix.toLowerCase()];
     document.getElementById(`price${prefix}`).value = "";
