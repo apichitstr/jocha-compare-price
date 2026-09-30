@@ -519,6 +519,48 @@ body.modal-open {
   display: none;
 }
 
+.update-banner {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 120;
+  display: flex;
+  width: min(520px, calc(100% - 24px));
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 10px 16px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  box-shadow: 0 16px 45px rgba(4, 20, 35, 0.28);
+  color: var(--ink);
+  transform: translateX(-50%);
+}
+
+.update-banner[hidden] {
+  display: none;
+}
+
+.update-banner span {
+  flex: 1;
+}
+
+#updateAppBtn {
+  padding: 8px 14px;
+  background: #168ccf;
+  color: #fff;
+}
+
+.update-dismiss {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  color: var(--ghost-text);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
 .modal-card {
   width: min(640px, 100%);
   max-height: min(82vh, 720px);
@@ -797,6 +839,7 @@ body.modal-open {
 
 .result-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 10px;
@@ -808,7 +851,9 @@ body.modal-open {
 }
 
 .share-status {
+  flex-basis: 100%;
   min-height: 1.2em;
+  text-align: center;
   color: var(--ok);
   font-size: 0.86rem;
 }

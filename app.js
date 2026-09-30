@@ -59,8 +59,13 @@ const I18N = {
       lowerIsBetter: "ต้นทุนยิ่งต่ำ ยิ่งคุ้มค่า",
       bestValue: "คุ้มที่สุด",
       shareResult: "คัดลอกลิงก์ผลลัพธ์",
+      shareImage: "แชร์รูปภาพ",
+      downloadImage: "ดาวน์โหลด PNG",
       shareCopied: "คัดลอกลิงก์แล้ว",
       shareFailed: "คัดลอกไม่สำเร็จ",
+      imageShared: "แชร์รูปภาพแล้ว",
+      imageDownloaded: "ดาวน์โหลดรูปภาพแล้ว",
+      imageShareFailed: "ไม่สามารถสร้างหรือแชร์รูปภาพได้",
       invalidShareLink: "ลิงก์ผลลัพธ์ไม่ถูกต้องหรือข้อมูลไม่ครบ",
       summaryTitle: "สรุป",
       summaryIdle: "กรอกข้อมูลแล้วกดคำนวณ",
@@ -100,6 +105,9 @@ const I18N = {
       layoutGroup: "รูปแบบคอลัมน์บนมือถือ",
       layoutOne: "แสดงแบบ 1 คอลัมน์",
       layoutTwo: "แสดงแบบ 2 คอลัมน์",
+      updateAvailable: "มีเวอร์ชันใหม่พร้อมใช้งาน",
+      updateNow: "อัปเดต",
+      updateDismiss: "ไว้ภายหลัง",
     },
   },
   en: {
@@ -138,8 +146,13 @@ const I18N = {
       lowerIsBetter: "Lower cost means better value",
       bestValue: "Best value",
       shareResult: "Copy result link",
+      shareImage: "Share image",
+      downloadImage: "Download PNG",
       shareCopied: "Link copied",
       shareFailed: "Could not copy link",
+      imageShared: "Image shared",
+      imageDownloaded: "Image downloaded",
+      imageShareFailed: "Could not create or share the image",
       invalidShareLink: "This result link is invalid or incomplete",
       summaryTitle: "Summary",
       summaryIdle: "Fill in values and click calculate",
@@ -179,6 +192,9 @@ const I18N = {
       layoutGroup: "Mobile product columns",
       layoutOne: "Show in 1 column",
       layoutTwo: "Show in 2 columns",
+      updateAvailable: "A new version is ready",
+      updateNow: "Update",
+      updateDismiss: "Later",
     },
   },
 };
@@ -194,6 +210,8 @@ let exchangeRatesUpdatedAt = null;
 let exchangeRatesOnline = false;
 let lastChartData = null;
 let lastChartUnitLabel = "";
+let pendingServiceWorker = null;
+let appUpdateRequested = false;
 
 const ELEMENT_IDS = {
   eyebrowText: "eyebrow",
@@ -248,6 +266,8 @@ const ELEMENT_IDS = {
   chartTitle: "chartTitle",
   chartHint: "lowerIsBetter",
   shareResultBtn: "shareResult",
+  shareImageBtn: "shareImage",
+  downloadImageBtn: "downloadImage",
   historyTitle: "historyTitle",
   clearHistoryBtn: "historyClear",
   historyEmpty: "historyEmpty",
@@ -258,6 +278,8 @@ const ELEMENT_IDS = {
   refreshRatesBtn: "refreshRates",
   themeLight: "themeLight",
   themeDark: "themeDark",
+  updateMessage: "updateAvailable",
+  updateAppBtn: "updateNow",
 };
 
 const UNIT_MAP = {
@@ -449,6 +471,9 @@ function applyLanguage() {
   renderHistory();
   document.getElementById("setNameInput").placeholder = t("setNamePlaceholder");
   document.getElementById("closeSavedSetsBtn").setAttribute("aria-label", t("closeSavedSets"));
+  const dismissUpdateBtn = document.getElementById("dismissUpdateBtn");
+  dismissUpdateBtn.setAttribute("aria-label", t("updateDismiss"));
+  dismissUpdateBtn.title = t("updateDismiss");
   renderSavedSets();
   renderExchangeStatus();
   if (lastChartData) {
@@ -500,6 +525,22 @@ function setMobileColumns(columns) {
   mobileColumns = columns === 1 ? 1 : 2;
   localStorage.setItem(STORAGE_KEYS.mobileColumns, String(mobileColumns));
   applyMobileColumns();
+}
+
+function showAppUpdate(worker) {
+  pendingServiceWorker = worker;
+  document.getElementById("updateBanner").hidden = false;
+}
+
+function dismissAppUpdate() {
+  document.getElementById("updateBanner").hidden = true;
+}
+
+function activateAppUpdate() {
+  if (pendingServiceWorker) {
+    appUpdateRequested = true;
+    pendingServiceWorker.postMessage({ type: "SKIP_WAITING" });
+  }
 }
 
 function formatNumber(num, digits = 2) {
@@ -774,6 +815,8 @@ function renderCostChart(products, unitLabel) {
 
   document.getElementById("costChart").hidden = false;
   document.getElementById("shareResultBtn").hidden = false;
+  document.getElementById("shareImageBtn").hidden = false;
+  document.getElementById("downloadImageBtn").hidden = false;
 }
 
 function clearCostChart() {
@@ -782,6 +825,8 @@ function clearCostChart() {
   const chart = document.getElementById("costChart");
   chart.hidden = true;
   document.getElementById("shareResultBtn").hidden = true;
+  document.getElementById("shareImageBtn").hidden = true;
+  document.getElementById("downloadImageBtn").hidden = true;
   document.getElementById("shareStatus").textContent = "";
   document.getElementById("costChartRows").replaceChildren();
 }
@@ -1113,6 +1158,173 @@ async function copyShareLink() {
   }
 }
 
+function drawWrappedCanvasText(context, text, x, y, maxWidth, lineHeight, maxLines = 3) {
+  const characters = Array.from(text);
+  let line = "";
+  let lineCount = 0;
+
+  for (const character of characters) {
+    if (character === "\n") {
+      context.fillText(line.trim(), x, y + lineCount * lineHeight);
+      line = "";
+      lineCount += 1;
+      if (lineCount >= maxLines) {
+        return lineCount;
+      }
+      continue;
+    }
+
+    const candidate = line + character;
+    if (context.measureText(candidate).width > maxWidth && line) {
+      context.fillText(line.trim(), x, y + lineCount * lineHeight);
+      line = character;
+      lineCount += 1;
+      if (lineCount >= maxLines) {
+        return lineCount;
+      }
+    } else {
+      line = candidate;
+    }
+  }
+
+  if (line && lineCount < maxLines) {
+    context.fillText(line.trim(), x, y + lineCount * lineHeight);
+    lineCount += 1;
+  }
+
+  return lineCount;
+}
+
+function fitCanvasText(context, text, maxWidth) {
+  if (context.measureText(text).width <= maxWidth) {
+    return text;
+  }
+  let shortened = text;
+  while (shortened.length > 1 && context.measureText(`${shortened}...`).width > maxWidth) {
+    shortened = shortened.slice(0, -1);
+  }
+  return `${shortened}...`;
+}
+
+async function createResultImageBlob() {
+  if (!lastChartData?.length) {
+    throw new Error("No comparison result");
+  }
+  if (document.fonts?.ready) {
+    await Promise.race([
+      document.fonts.ready,
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ]);
+  }
+
+  const ranked = [...lastChartData].sort((first, second) => first.costPerUnit - second.costPerUnit);
+  const width = 1200;
+  const rowHeight = 126;
+  const height = 420 + ranked.length * rowHeight;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  const fontFamily = '"Kanit", "IBM Plex Sans Thai", sans-serif';
+
+  context.fillStyle = "#f3f8fb";
+  context.fillRect(0, 0, width, height);
+  context.fillStyle = "#126f91";
+  context.fillRect(0, 0, width, 18);
+  context.fillStyle = "#0e3142";
+  context.font = `700 54px ${fontFamily}`;
+  context.fillText("Jocha Compares Prices", 72, 100);
+  context.fillStyle = "#497080";
+  context.font = `400 25px ${fontFamily}`;
+  context.fillText(t("chartTitle"), 72, 145);
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(56, 185, width - 112, 170);
+  context.fillStyle = "#6b8793";
+  context.font = `500 22px ${fontFamily}`;
+  context.fillText(t("summaryTitle"), 82, 225);
+  context.fillStyle = "#126f91";
+  context.font = `600 30px ${fontFamily}`;
+  drawWrappedCanvasText(context, document.getElementById("summaryText").textContent, 82, 270, width - 164, 38, 3);
+
+  const highestCost = Math.max(...ranked.map((product) => product.costPerUnit));
+  let rank = 1;
+  ranked.forEach((product, index) => {
+    if (index > 0 && Math.abs(product.costPerUnit - ranked[index - 1].costPerUnit) >= 1e-12) {
+      rank = index + 1;
+    }
+    const y = 385 + index * rowHeight;
+    const isBest = Math.abs(product.costPerUnit - ranked[0].costPerUnit) < 1e-12;
+    context.fillStyle = isBest ? "#e4f7f1" : "#ffffff";
+    context.fillRect(56, y, width - 112, 104);
+
+    context.fillStyle = isBest ? "#0b8d70" : "#126f91";
+    context.font = `700 26px ${fontFamily}`;
+    context.fillText(`${rank}`, 82, y + 43);
+    context.fillStyle = "#173b49";
+    context.font = `600 28px ${fontFamily}`;
+    context.fillText(fitCanvasText(context, product.name, 500), 126, y + 43);
+    context.textAlign = "right";
+    context.fillStyle = "#173b49";
+    context.font = `500 24px ${fontFamily}`;
+    context.fillText(`${formatNumber(product.costPerUnit, 4)} ${t("bahtPer")} ${lastChartUnitLabel}`, width - 82, y + 43);
+    context.textAlign = "left";
+
+    context.fillStyle = "#dce9ee";
+    context.fillRect(126, y + 66, width - 208, 14);
+    context.fillStyle = isBest ? "#13a384" : "#2694cf";
+    const relativeWidth = highestCost > 0 ? product.costPerUnit / highestCost : 1;
+    context.fillRect(126, y + 66, Math.max(24, (width - 208) * relativeWidth), 14);
+  });
+
+  context.fillStyle = "#6b8793";
+  context.font = `400 20px ${fontFamily}`;
+  context.fillText(new Date().toLocaleString(I18N[currentLang].lang), 72, height - 28);
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("PNG creation failed")), "image/png");
+  });
+}
+
+function downloadImageBlob(blob) {
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `jocha-comparison-${new Date().toISOString().slice(0, 10)}.png`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
+async function downloadResultImage() {
+  const status = document.getElementById("shareStatus");
+  try {
+    downloadImageBlob(await createResultImageBlob());
+    status.textContent = t("imageDownloaded");
+  } catch (error) {
+    status.textContent = t("imageShareFailed");
+  }
+}
+
+async function shareResultImage() {
+  const status = document.getElementById("shareStatus");
+  try {
+    const blob = await createResultImageBlob();
+    const file = new File([blob], "jocha-comparison.png", { type: "image/png" });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ title: t("title"), files: [file] });
+      status.textContent = t("imageShared");
+    } else {
+      downloadImageBlob(blob);
+      status.textContent = t("imageDownloaded");
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      status.textContent = t("imageShareFailed");
+    }
+  }
+}
+
 function loadSharedComparison() {
   const encoded = new URLSearchParams(window.location.hash.slice(1)).get("share");
   if (!encoded) {
@@ -1196,6 +1408,8 @@ function init() {
   document.getElementById("calcBtn").addEventListener("click", calculate);
   document.getElementById("resetBtn").addEventListener("click", resetForm);
   document.getElementById("shareResultBtn").addEventListener("click", copyShareLink);
+  document.getElementById("shareImageBtn").addEventListener("click", shareResultImage);
+  document.getElementById("downloadImageBtn").addEventListener("click", downloadResultImage);
   document.getElementById("openSavedSetsBtn").addEventListener("click", openSavedSetsModal);
   document.getElementById("closeSavedSetsBtn").addEventListener("click", closeSavedSetsModal);
   document.getElementById("saveSetBtn").addEventListener("click", saveCurrentProductSet);
@@ -1211,6 +1425,8 @@ function init() {
   document.getElementById("themeDark").addEventListener("click", () => setTheme("dark"));
   document.getElementById("layoutOne").addEventListener("click", () => setMobileColumns(1));
   document.getElementById("layoutTwo").addEventListener("click", () => setMobileColumns(2));
+  document.getElementById("updateAppBtn").addEventListener("click", activateAppUpdate);
+  document.getElementById("dismissUpdateBtn").addEventListener("click", dismissAppUpdate);
   document.getElementById("refreshRatesBtn").addEventListener("click", refreshExchangeRates);
   document.getElementById("savedSetsModal").addEventListener("click", (event) => {
     if (event.target === event.currentTarget) {
@@ -1230,7 +1446,29 @@ function init() {
 
 function registerServiceWorker() {
   if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
-    navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" }).catch(() => {});
+    let reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (appUpdateRequested && !reloading) {
+        reloading = true;
+        window.location.reload();
+      }
+    });
+
+    navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" })
+      .then((registration) => {
+        if (registration.waiting) {
+          showAppUpdate(registration.waiting);
+        }
+        registration.addEventListener("updatefound", () => {
+          const worker = registration.installing;
+          worker?.addEventListener("statechange", () => {
+            if (worker.state === "installed" && navigator.serviceWorker.controller) {
+              showAppUpdate(worker);
+            }
+          });
+        });
+      })
+      .catch(() => {});
   }
 }
 

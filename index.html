@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
@@ -317,6 +317,8 @@
       </section>
       <div class="result-actions">
         <button id="shareResultBtn" type="button" class="ghost" hidden>คัดลอกลิงก์ผลลัพธ์</button>
+        <button id="shareImageBtn" type="button" class="ghost" hidden>แชร์รูปภาพ</button>
+        <button id="downloadImageBtn" type="button" class="ghost" hidden>ดาวน์โหลด PNG</button>
         <span id="shareStatus" class="share-status" aria-live="polite"></span>
       </div>
     </section>
@@ -346,6 +348,12 @@
     </section>
   </div>
 
-  <script src="app.js?v=4"></script>
+  <aside id="updateBanner" class="update-banner" role="status" aria-live="polite" hidden>
+    <span id="updateMessage">มีเวอร์ชันใหม่พร้อมใช้งาน</span>
+    <button id="updateAppBtn" type="button">อัปเดต</button>
+    <button id="dismissUpdateBtn" type="button" class="update-dismiss" aria-label="ไว้ภายหลัง" title="ไว้ภายหลัง">×</button>
+  </aside>
+
+  <script src="app.js?v=5"></script>
 </body>
 </html>
