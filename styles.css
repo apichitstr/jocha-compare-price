@@ -166,6 +166,7 @@ h1 {
 
 .lang-switch,
 .theme-switch,
+.layout-switch,
 .compare-switch {
   display: inline-flex;
   background: var(--switch-bg);
@@ -174,8 +175,13 @@ h1 {
   padding: 3px;
 }
 
+.layout-switch {
+  display: none;
+}
+
 .lang-btn,
 .theme-btn,
+.layout-btn,
 .compare-mode {
   border: 0;
   border-radius: 999px;
@@ -193,8 +199,38 @@ h1 {
   font-size: 0.86rem;
 }
 
+.layout-btn {
+  display: inline-grid;
+  min-width: 38px;
+  place-items: center;
+  padding-inline: 10px;
+}
+
+.layout-icon {
+  display: grid;
+  width: 18px;
+  height: 16px;
+  gap: 2px;
+}
+
+.layout-icon-one {
+  grid-template-columns: 1fr;
+}
+
+.layout-icon-two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.layout-icon span {
+  min-width: 0;
+  min-height: 0;
+  border: 1.5px solid currentColor;
+  border-radius: 1px;
+}
+
 .lang-btn.active,
 .theme-btn.active,
+.layout-btn.active,
 .compare-mode.active {
   background: linear-gradient(90deg, #2a96ff, #16b8a8);
   color: #fff;
@@ -904,6 +940,14 @@ body.modal-open {
 }
 
 @media (max-width: 800px) {
+  .layout-switch {
+    display: inline-flex;
+  }
+
+  .app-shell {
+    padding-inline: 10px;
+  }
+
   .topbar {
     align-items: flex-start;
     flex-direction: column;
@@ -921,6 +965,10 @@ body.modal-open {
   .exchange-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .controls {
+    padding: 10px;
   }
 
   .saved-set-item {
@@ -949,8 +997,65 @@ body.modal-open {
   }
 
   .cards,
+  .three-product-mode .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobile-one-column .cards,
+  .mobile-one-column.three-product-mode .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .three-product-mode .product-card-c {
+    grid-column: 1 / -1;
+  }
+
+  .product-card {
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .product-card h2 {
+    margin-bottom: 9px;
+    font-size: 1.05rem;
+  }
+
+  .product-card label,
+  .product-card legend {
+    font-size: 0.82rem;
+  }
+
+  .product-card input[type="text"],
+  .product-card input[type="number"],
+  .product-card select {
+    min-width: 0;
+    padding: 8px 7px;
+    font-size: 0.85rem;
+  }
+
+  .price-input,
+  .coupon-input {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .exchange-rate {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 3px 5px;
+    font-size: 0.72rem;
+  }
+
+  .mode-group {
+    padding-inline: 7px;
+  }
+
+  .mode-group label {
+    margin-right: 6px;
+  }
+
   .result-grid,
-  .three-product-mode .cards,
   .three-product-mode .result-grid {
     grid-template-columns: 1fr;
   }

@@ -1,6 +1,7 @@
 const STORAGE_KEYS = {
   lang: "jocha_compare_lang",
   theme: "jocha_compare_theme",
+  mobileColumns: "jocha_compare_mobile_columns",
   history: "jocha_compare_history",
   savedSets: "jocha_compare_saved_sets",
   exchangeRates: "jocha_compare_exchange_rates",
@@ -96,6 +97,9 @@ const I18N = {
       refreshRates: "รีเฟรชเรต",
       themeLight: "Light",
       themeDark: "Dark",
+      layoutGroup: "รูปแบบคอลัมน์บนมือถือ",
+      layoutOne: "แสดงแบบ 1 คอลัมน์",
+      layoutTwo: "แสดงแบบ 2 คอลัมน์",
     },
   },
   en: {
@@ -172,12 +176,16 @@ const I18N = {
       refreshRates: "Refresh rates",
       themeLight: "Light",
       themeDark: "Dark",
+      layoutGroup: "Mobile product columns",
+      layoutOne: "Show in 1 column",
+      layoutTwo: "Show in 2 columns",
     },
   },
 };
 
 let currentLang = "th";
 let currentTheme = "light";
+let mobileColumns = 2;
 let comparisonMode = "two";
 let calculationHistory = [];
 let savedProductSets = [];
@@ -341,6 +349,8 @@ function loadState() {
     currentTheme = storedTheme;
   }
 
+  mobileColumns = localStorage.getItem(STORAGE_KEYS.mobileColumns) === "1" ? 1 : 2;
+
   try {
     const rawHistory = localStorage.getItem(STORAGE_KEYS.history);
     calculationHistory = rawHistory ? JSON.parse(rawHistory) : [];
@@ -399,6 +409,13 @@ function applyLanguage() {
     }
 
     el.textContent = t(key);
+  });
+
+  document.querySelector(".layout-switch").setAttribute("aria-label", t("layoutGroup"));
+  ["layoutOne", "layoutTwo"].forEach((id) => {
+    const button = document.getElementById(id);
+    button.setAttribute("aria-label", t(id));
+    button.title = t(id);
   });
 
   prefixes.forEach((prefix) => {
@@ -467,6 +484,22 @@ function setTheme(theme) {
   currentTheme = theme;
   localStorage.setItem(STORAGE_KEYS.theme, theme);
   applyTheme();
+}
+
+function applyMobileColumns() {
+  document.body.classList.toggle("mobile-one-column", mobileColumns === 1);
+  const layoutOne = document.getElementById("layoutOne");
+  const layoutTwo = document.getElementById("layoutTwo");
+  layoutOne.classList.toggle("active", mobileColumns === 1);
+  layoutTwo.classList.toggle("active", mobileColumns === 2);
+  layoutOne.setAttribute("aria-pressed", String(mobileColumns === 1));
+  layoutTwo.setAttribute("aria-pressed", String(mobileColumns === 2));
+}
+
+function setMobileColumns(columns) {
+  mobileColumns = columns === 1 ? 1 : 2;
+  localStorage.setItem(STORAGE_KEYS.mobileColumns, String(mobileColumns));
+  applyMobileColumns();
 }
 
 function formatNumber(num, digits = 2) {
@@ -1150,6 +1183,7 @@ function resetForm() {
 function init() {
   loadState();
   applyTheme();
+  applyMobileColumns();
   ["A", "B", "C"].forEach((prefix) => {
     bindModeToggle(prefix);
     bindCouponToggle(prefix);
@@ -1175,6 +1209,8 @@ function init() {
   document.getElementById("langEN").addEventListener("click", () => setLanguage("en"));
   document.getElementById("themeLight").addEventListener("click", () => setTheme("light"));
   document.getElementById("themeDark").addEventListener("click", () => setTheme("dark"));
+  document.getElementById("layoutOne").addEventListener("click", () => setMobileColumns(1));
+  document.getElementById("layoutTwo").addEventListener("click", () => setMobileColumns(2));
   document.getElementById("refreshRatesBtn").addEventListener("click", refreshExchangeRates);
   document.getElementById("savedSetsModal").addEventListener("click", (event) => {
     if (event.target === event.currentTarget) {
