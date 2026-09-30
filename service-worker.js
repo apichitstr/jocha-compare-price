@@ -1,4 +1,4 @@
-const CACHE_NAME = "jocha-app-v1";
+const CACHE_NAME = "jocha-app-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
