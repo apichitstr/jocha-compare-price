@@ -121,6 +121,7 @@ const I18N = {
 
 let currentLang = "th";
 let currentTheme = "light";
+let comparisonMode = "two";
 let calculationHistory = [];
 
 const ELEMENT_IDS = {
@@ -211,7 +212,23 @@ function t(key) {
 }
 
 function getProductPrefixes() {
-  return ["A", "B", "C"].filter((prefix) => document.getElementById(`price${prefix}`));
+  return comparisonMode === "three" ? ["A", "B", "C"] : ["A", "B"];
+}
+
+function setComparisonMode(mode) {
+  comparisonMode = mode === "three" ? "three" : "two";
+  const isThreeProductMode = comparisonMode === "three";
+  document.body.classList.toggle("three-product-mode", isThreeProductMode);
+  document.getElementById("cardC").hidden = !isThreeProductMode;
+  document.getElementById("metricC").hidden = !isThreeProductMode;
+
+  const compareTwo = document.getElementById("compareTwoLink");
+  const compareThree = document.getElementById("compareThreeLink");
+  compareTwo.classList.toggle("active", !isThreeProductMode);
+  compareThree.classList.toggle("active", isThreeProductMode);
+  compareTwo.setAttribute("aria-pressed", String(!isThreeProductMode));
+  compareThree.setAttribute("aria-pressed", String(isThreeProductMode));
+  applyLanguage();
 }
 
 function loadState() {
@@ -268,8 +285,8 @@ function applyLanguage() {
     }
   });
 
-  document.getElementById("compareTwoLink").classList.toggle("active", !prefixes.includes("C"));
-  document.getElementById("compareThreeLink").classList.toggle("active", prefixes.includes("C"));
+  document.getElementById("compareTwoLink").classList.toggle("active", comparisonMode === "two");
+  document.getElementById("compareThreeLink").classList.toggle("active", comparisonMode === "three");
 
   const langTH = document.getElementById("langTH");
   const langEN = document.getElementById("langEN");
@@ -614,11 +631,14 @@ function init() {
 
   document.getElementById("calcBtn").addEventListener("click", calculate);
   document.getElementById("resetBtn").addEventListener("click", resetForm);
+  document.getElementById("compareTwoLink").addEventListener("click", () => setComparisonMode("two"));
+  document.getElementById("compareThreeLink").addEventListener("click", () => setComparisonMode("three"));
   document.getElementById("clearHistoryBtn").addEventListener("click", clearHistory);
   document.getElementById("langTH").addEventListener("click", () => setLanguage("th"));
   document.getElementById("langEN").addEventListener("click", () => setLanguage("en"));
   document.getElementById("themeLight").addEventListener("click", () => setTheme("light"));
   document.getElementById("themeDark").addEventListener("click", () => setTheme("dark"));
+  setComparisonMode("two");
 }
 
 init();

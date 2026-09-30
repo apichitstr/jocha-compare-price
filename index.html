@@ -25,8 +25,8 @@
             <button id="langEN" type="button" class="lang-btn">EN</button>
           </div>
           <nav class="compare-switch" aria-label="Comparison mode">
-            <a id="compareTwoLink" class="compare-mode active" href="index.html" aria-current="page">2 สินค้า</a>
-            <a id="compareThreeLink" class="compare-mode" href="compare-three.html">3 สินค้า</a>
+            <button id="compareTwoLink" class="compare-mode active" type="button" aria-pressed="true">2 สินค้า</button>
+            <button id="compareThreeLink" class="compare-mode" type="button" aria-pressed="false">3 สินค้า</button>
           </nav>
         </div>
       </div>
@@ -167,6 +167,72 @@
             <input id="qtyB" type="number" min="1" step="1" value="1" disabled />
           </div>
         </article>
+
+        <article class="product-card product-card-c" id="cardC" hidden>
+          <h2 id="productCTitle">สินค้า C</h2>
+          <div class="field">
+            <label for="nameC" id="nameCLabel">ชื่อสินค้า</label>
+            <input id="nameC" type="text" value="สินค้า C" />
+          </div>
+          <div class="field">
+            <label for="priceC" id="priceCLabel">ราคา (บาท)</label>
+            <input id="priceC" type="number" min="0" step="0.01" placeholder="เช่น 189" />
+          </div>
+          <div class="field coupon-field">
+            <label for="couponC" id="couponCLabel">ส่วนลดคูปอง</label>
+            <div class="coupon-input">
+              <input id="couponC" type="number" min="0" step="0.01" placeholder="0" />
+              <select id="couponTypeC" aria-label="หน่วยส่วนลดคูปองสินค้า C">
+                <option value="percent">%</option>
+                <option id="couponAmountC" value="amount">บาท</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="volumeC" id="volumeCLabel">ปริมาตรต่อชิ้น</label>
+            <input id="volumeC" type="number" min="0" step="0.01" placeholder="เช่น 750" />
+          </div>
+          <div class="field">
+            <label class="factor-toggle" for="factorEnabledC">
+              <input id="factorEnabledC" type="checkbox" />
+              <span id="factorToggleCLabel">กำหนดความยาวเทียบปกติ</span>
+            </label>
+            <div id="factorWrapC" class="factor-input" hidden>
+              <label for="factorC" id="factorCLabel">ความยาวเทียบปกติ (เท่า)</label>
+              <input id="factorC" type="number" min="0.01" step="0.1" value="1.0" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="unitC" id="unitCLabel">หน่วยต่อชิ้น</label>
+            <select id="unitC">
+              <option value="ml" selected>ml (milliliter)</option>
+              <option value="l">L (liter)</option>
+              <option value="fl oz">fl oz (fluid ounce)</option>
+              <option value="cup">cup</option>
+              <option value="tbsp">tbsp (tablespoon)</option>
+              <option value="tsp">tsp (teaspoon)</option>
+              <option value="cc">cc</option>
+              <option value="g">g (gram)</option>
+              <option value="kg">kg (kilogram)</option>
+              <option value="oz">oz (ounce)</option>
+              <option value="lb">lb (pound)</option>
+              <option value="piece">piece</option>
+              <option value="pack">pack</option>
+              <option value="sheet">sheet</option>
+              <option value="m">m (meter)</option>
+              <option value="cm">cm (centimeter)</option>
+            </select>
+          </div>
+          <fieldset class="field mode-group">
+            <legend id="modeCLegend">โหมดสินค้า</legend>
+            <label id="modeCSingleLabel"><input type="radio" name="modeC" value="single" checked /> ชิ้นเดียว</label>
+            <label id="modeCPackLabel"><input type="radio" name="modeC" value="pack" /> แบบแพ็ก</label>
+          </fieldset>
+          <div class="field" id="packWrapC">
+            <label for="qtyC" id="qtyCLabel">จำนวนชิ้นในแพ็ก</label>
+            <input id="qtyC" type="number" min="1" step="1" value="1" disabled />
+          </div>
+        </article>
       </div>
 
       <div class="actions">
@@ -185,6 +251,10 @@
         <div class="metric">
           <p class="metric-title" id="cpuBTitle">ต้นทุนต่อหน่วยของ B</p>
           <p class="metric-value" id="cpuB">-</p>
+        </div>
+        <div class="metric" id="metricC" hidden>
+          <p class="metric-title" id="cpuCTitle">ต้นทุนต่อหน่วยของ C</p>
+          <p class="metric-value" id="cpuC">-</p>
         </div>
         <div class="metric wide">
           <p class="metric-title" id="summaryTitle">สรุป</p>
