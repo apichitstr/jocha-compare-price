@@ -1,9 +1,9 @@
-const CACHE_NAME = "jocha-app-v3";
+const CACHE_NAME = "jocha-app-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./app.js",
+  "./styles.css?v=4",
+  "./app.js?v=4",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -47,15 +47,14 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request).then((response) => {
+    fetch(event.request)
+      .then((response) => {
         if (response.ok || response.type === "opaque") {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         }
         return response;
-      });
-      return cached || network;
-    }),
+      })
+      .catch(() => caches.match(event.request)),
   );
 });
