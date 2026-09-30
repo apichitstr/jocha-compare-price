@@ -2,9 +2,11 @@ const STORAGE_KEYS = {
   lang: "jocha_compare_lang",
   theme: "jocha_compare_theme",
   history: "jocha_compare_history",
+  savedSets: "jocha_compare_saved_sets",
 };
 
 const MAX_HISTORY = 20;
+const MAX_SAVED_SETS = 20;
 
 const I18N = {
   th: {
@@ -58,6 +60,14 @@ const I18N = {
       historyClear: "ล้างประวัติ",
       historyEmpty: "ยังไม่มีประวัติการคำนวณ",
       historyAt: "เวลา",
+      historyRestore: "กดเพื่อเรียกค่ากลับมาแก้ไข",
+      savedSetsTitle: "ชุดสินค้าที่บันทึก",
+      setNamePlaceholder: "ชื่อชุดสินค้า",
+      saveSet: "บันทึกชุดนี้",
+      savedSetsEmpty: "ยังไม่มีชุดสินค้าที่บันทึก",
+      loadSet: "เรียกใช้",
+      deleteSet: "ลบ",
+      defaultSetName: "ชุดสินค้า",
       themeLight: "Light",
       themeDark: "Dark",
     },
@@ -113,6 +123,14 @@ const I18N = {
       historyClear: "Clear history",
       historyEmpty: "No calculation history yet",
       historyAt: "Time",
+      historyRestore: "Click to restore and edit these values",
+      savedSetsTitle: "Saved Product Sets",
+      setNamePlaceholder: "Set name",
+      saveSet: "Save this set",
+      savedSetsEmpty: "No saved product sets yet",
+      loadSet: "Load",
+      deleteSet: "Delete",
+      defaultSetName: "Product set",
       themeLight: "Light",
       themeDark: "Dark",
     },
@@ -123,6 +141,7 @@ let currentLang = "th";
 let currentTheme = "light";
 let comparisonMode = "two";
 let calculationHistory = [];
+let savedProductSets = [];
 
 const ELEMENT_IDS = {
   eyebrowText: "eyebrow",
@@ -177,6 +196,8 @@ const ELEMENT_IDS = {
   historyTitle: "historyTitle",
   clearHistoryBtn: "historyClear",
   historyEmpty: "historyEmpty",
+  savedSetsTitle: "savedSetsTitle",
+  saveSetBtn: "saveSet",
   themeLight: "themeLight",
   themeDark: "themeDark",
 };
@@ -209,6 +230,15 @@ const BASE_UNITS = {
 
 function t(key) {
   return I18N[currentLang].text[key];
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function getProductPrefixes() {
@@ -248,10 +278,24 @@ function loadState() {
   } catch {
     calculationHistory = [];
   }
+
+  try {
+    const rawSavedSets = localStorage.getItem(STORAGE_KEYS.savedSets);
+    savedProductSets = rawSavedSets ? JSON.parse(rawSavedSets) : [];
+    if (!Array.isArray(savedProductSets)) {
+      savedProductSets = [];
+    }
+  } catch {
+    savedProductSets = [];
+  }
 }
 
 function saveHistory() {
   localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(calculationHistory));
+}
+
+function saveProductSets() {
+  localStorage.setItem(STORAGE_KEYS.savedSets, JSON.stringify(savedProductSets));
 }
 
 function applyLanguage() {
@@ -306,6 +350,8 @@ function applyLanguage() {
   });
 
   renderHistory();
+  document.getElementById("setNameInput").placeholder = t("setNamePlaceholder");
+  renderSavedSets();
 }
 
 function setLanguage(lang) {
@@ -539,9 +585,17 @@ function renderHistory() {
     return;
   }
 
-  calculationHistory.forEach((item) => {
+  calculationHistory.forEach((item, index) => {
     const li = document.createElement("li");
     li.className = "history-item";
+    if (item.products) {
+      li.classList.add("history-item-restorable");
+      li.dataset.historyIndex = String(index);
+      li.tabIndex = 0;
+      li.setAttribute("role", "button");
+      li.setAttribute("title", t("historyRestore"));
+      li.setAttribute("aria-label", `${item.summary}. ${t("historyRestore")}`);
+    }
 
     const main = document.createElement("p");
     main.className = "history-main";
@@ -562,6 +616,129 @@ function clearHistory() {
   calculationHistory = [];
   saveHistory();
   renderHistory();
+}
+
+function restoreHistoryEntry(index) {
+  const entry = calculationHistory[index];
+  if (!entry?.products) {
+    return;
+  }
+  setComparisonMode(entry.comparisonMode);
+  getProductPrefixes().forEach((prefix) => restoreProductForm(prefix, entry.products[prefix]));
+  document.querySelector(".controls").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function handleHistoryRestore(event) {
+  const item = event.target.closest(".history-item-restorable");
+  if (!item || (event.type === "keydown" && event.key !== "Enter" && event.key !== " ")) {
+    return;
+  }
+  event.preventDefault();
+  restoreHistoryEntry(Number(item.dataset.historyIndex));
+}
+
+function captureProductForm(prefix) {
+  return {
+    name: document.getElementById(`name${prefix}`).value,
+    price: document.getElementById(`price${prefix}`).value,
+    coupon: document.getElementById(`coupon${prefix}`).value,
+    couponType: document.getElementById(`couponType${prefix}`).value,
+    volume: document.getElementById(`volume${prefix}`).value,
+    factorEnabled: document.getElementById(`factorEnabled${prefix}`).checked,
+    factor: document.getElementById(`factor${prefix}`).value,
+    unit: document.getElementById(`unit${prefix}`).value,
+    mode: getMode(`mode${prefix}`),
+    qty: document.getElementById(`qty${prefix}`).value,
+  };
+}
+
+function saveCurrentProductSet() {
+  const nameInput = document.getElementById("setNameInput");
+  const name = nameInput.value.trim() || `${t("defaultSetName")} ${savedProductSets.length + 1}`;
+  savedProductSets.unshift({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    comparisonMode,
+    products: Object.fromEntries(getProductPrefixes().map((prefix) => [prefix, captureProductForm(prefix)])),
+  });
+  savedProductSets = savedProductSets.slice(0, MAX_SAVED_SETS);
+  saveProductSets();
+  nameInput.value = "";
+  renderSavedSets();
+}
+
+function restoreProductForm(prefix, product) {
+  if (!product) {
+    return;
+  }
+  document.getElementById(`name${prefix}`).value = product.name ?? "";
+  document.getElementById(`price${prefix}`).value = product.price ?? "";
+  document.getElementById(`coupon${prefix}`).value = product.coupon ?? "";
+  document.getElementById(`couponType${prefix}`).value = product.couponType === "amount" ? "amount" : "percent";
+  document.getElementById(`volume${prefix}`).value = product.volume ?? "";
+  document.getElementById(`factorEnabled${prefix}`).checked = Boolean(product.factorEnabled);
+  document.getElementById(`factor${prefix}`).value = product.factor || "1.0";
+  document.getElementById(`unit${prefix}`).value = UNIT_MAP[product.unit] ? product.unit : "ml";
+  const mode = product.mode === "pack" ? "pack" : "single";
+  document.querySelector(`input[name="mode${prefix}"][value="${mode}"]`).checked = true;
+  document.getElementById(`qty${prefix}`).value = product.qty || "1";
+  document.getElementById(`qty${prefix}`).disabled = mode !== "pack";
+  updateFactorVisibility(prefix);
+}
+
+function loadProductSet(id) {
+  const savedSet = savedProductSets.find((item) => item.id === id);
+  if (!savedSet) {
+    return;
+  }
+  setComparisonMode(savedSet.comparisonMode);
+  getProductPrefixes().forEach((prefix) => restoreProductForm(prefix, savedSet.products?.[prefix]));
+  document.getElementById("results").classList.remove("result-ready");
+  getProductPrefixes().forEach((prefix) => {
+    document.getElementById(`cpu${prefix}`).textContent = "-";
+  });
+  const summary = document.getElementById("summaryText");
+  summary.classList.remove("win", "tie", "error");
+  summary.textContent = t("summaryIdle");
+}
+
+function deleteProductSet(id) {
+  savedProductSets = savedProductSets.filter((item) => item.id !== id);
+  saveProductSets();
+  renderSavedSets();
+}
+
+function renderSavedSets() {
+  const list = document.getElementById("savedSetsList");
+  if (!savedProductSets.length) {
+    list.innerHTML = `<p class="saved-sets-empty">${t("savedSetsEmpty")}</p>`;
+    return;
+  }
+
+  list.innerHTML = savedProductSets.map((savedSet) => `
+    <div class="saved-set-item">
+      <div>
+        <strong>${escapeHtml(savedSet.name)}</strong>
+        <span>${savedSet.comparisonMode === "three" ? t("compareThree") : t("compareTwo")}</span>
+      </div>
+      <div class="saved-set-actions">
+        <button type="button" class="saved-set-load" data-set-action="load" data-set-id="${savedSet.id}">${t("loadSet")}</button>
+        <button type="button" class="saved-set-delete" data-set-action="delete" data-set-id="${savedSet.id}">${t("deleteSet")}</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function handleSavedSetAction(event) {
+  const button = event.target.closest("button[data-set-action]");
+  if (!button) {
+    return;
+  }
+  if (button.dataset.setAction === "load") {
+    loadProductSet(button.dataset.setId);
+  } else {
+    deleteProductSet(button.dataset.setId);
+  }
 }
 
 function calculate() {
@@ -593,6 +770,8 @@ function calculate() {
     summary: result.summary,
     unitInfo: `${unitInfo}, ${unitLabel}`,
     lang: currentLang,
+    comparisonMode,
+    products: Object.fromEntries(getProductPrefixes().map((prefix) => [prefix, captureProductForm(prefix)])),
   });
 }
 
@@ -622,7 +801,7 @@ function resetForm() {
 function init() {
   loadState();
   applyTheme();
-  getProductPrefixes().forEach((prefix) => {
+  ["A", "B", "C"].forEach((prefix) => {
     bindModeToggle(prefix);
     bindFactorToggle(prefix);
   });
@@ -631,9 +810,13 @@ function init() {
 
   document.getElementById("calcBtn").addEventListener("click", calculate);
   document.getElementById("resetBtn").addEventListener("click", resetForm);
+  document.getElementById("saveSetBtn").addEventListener("click", saveCurrentProductSet);
+  document.getElementById("savedSetsList").addEventListener("click", handleSavedSetAction);
   document.getElementById("compareTwoLink").addEventListener("click", () => setComparisonMode("two"));
   document.getElementById("compareThreeLink").addEventListener("click", () => setComparisonMode("three"));
   document.getElementById("clearHistoryBtn").addEventListener("click", clearHistory);
+  document.getElementById("historyList").addEventListener("click", handleHistoryRestore);
+  document.getElementById("historyList").addEventListener("keydown", handleHistoryRestore);
   document.getElementById("langTH").addEventListener("click", () => setLanguage("th"));
   document.getElementById("langEN").addEventListener("click", () => setLanguage("en"));
   document.getElementById("themeLight").addEventListener("click", () => setTheme("light"));

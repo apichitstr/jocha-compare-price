@@ -239,6 +239,17 @@
         <button id="calcBtn" type="button">คำนวณความคุ้มค่า</button>
         <button id="resetBtn" type="button" class="ghost">ล้างค่า</button>
       </div>
+
+      <section class="saved-sets" aria-labelledby="savedSetsTitle">
+        <div class="saved-sets-head">
+          <h3 id="savedSetsTitle">ชุดสินค้าที่บันทึก</h3>
+          <div class="save-set-controls">
+            <input id="setNameInput" type="text" maxlength="60" placeholder="ชื่อชุดสินค้า" />
+            <button id="saveSetBtn" type="button" class="ghost">บันทึกชุดนี้</button>
+          </div>
+        </div>
+        <div id="savedSetsList" class="saved-sets-list"></div>
+      </section>
     </section>
 
     <section class="results" id="results" aria-live="polite">

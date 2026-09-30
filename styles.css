@@ -356,6 +356,87 @@ button.ghost {
   color: var(--ghost-text);
 }
 
+.saved-sets {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.saved-sets-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.saved-sets h3 {
+  margin: 0;
+  color: var(--history-title);
+  font-family: "Kanit", sans-serif;
+}
+
+.save-set-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.save-set-controls input {
+  min-width: 220px;
+}
+
+.saved-sets-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.saved-set-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--history-item-border);
+  border-radius: 10px;
+  background: var(--history-item-bg);
+}
+
+.saved-set-item strong,
+.saved-set-item span {
+  display: block;
+}
+
+.saved-set-item strong {
+  color: var(--history-main);
+}
+
+.saved-set-item span,
+.saved-sets-empty {
+  margin: 2px 0 0;
+  color: var(--history-sub);
+  font-size: 0.85rem;
+}
+
+.saved-set-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.saved-set-actions button {
+  padding: 7px 11px;
+  font-size: 0.86rem;
+}
+
+.saved-set-load {
+  background: linear-gradient(90deg, #1c87e5, #12a49d);
+  color: #fff;
+}
+
+.saved-set-delete {
+  background: var(--ghost-bg);
+  color: var(--danger);
+}
+
 .results {
   margin-top: 16px;
   padding: 16px;
@@ -413,6 +494,22 @@ button.ghost {
   border-radius: 10px;
   background: var(--history-item-bg);
   padding: 10px;
+}
+
+.history-item-restorable {
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.history-item-restorable:hover {
+  transform: translateY(-1px);
+  border-color: #2196f3;
+  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.12);
+}
+
+.history-item-restorable:focus-visible {
+  outline: 3px solid rgba(33, 150, 243, 0.28);
+  outline-offset: 2px;
 }
 
 .history-main {
@@ -567,6 +664,24 @@ button.ghost {
   .history-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .saved-sets-head,
+  .saved-set-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .save-set-controls {
+    flex-direction: column;
+  }
+
+  .save-set-controls input {
+    min-width: 0;
+  }
+
+  .saved-set-actions button {
+    flex: 1;
   }
 
   .cards,
