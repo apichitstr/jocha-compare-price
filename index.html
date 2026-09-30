@@ -35,6 +35,13 @@
     </header>
 
     <section class="controls">
+      <div class="exchange-toolbar">
+        <div>
+          <strong id="exchangeStatusTitle">อัตราแลกเปลี่ยนออนไลน์</strong>
+          <span id="exchangeStatus" aria-live="polite">กำลังอัปเดต...</span>
+        </div>
+        <button id="refreshRatesBtn" type="button" class="ghost">รีเฟรชเรต</button>
+      </div>
       <div class="cards">
         <article class="product-card" id="cardA">
           <h2 id="productATitle">สินค้า A</h2>
@@ -44,7 +51,13 @@
           </div>
           <div class="field">
             <label for="priceA" id="priceALabel">ราคา (บาท)</label>
-            <input id="priceA" type="number" min="0" step="0.01" placeholder="เช่น 129" />
+            <div class="price-input">
+              <input id="priceA" type="number" min="0" step="0.01" placeholder="เช่น 129" />
+              <select id="currencyA" aria-label="สกุลเงินสินค้า A">
+                <option value="THB" selected>THB</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="JPY">JPY</option><option value="CNY">CNY</option><option value="KRW">KRW</option><option value="GBP">GBP</option><option value="SGD">SGD</option>
+              </select>
+            </div>
+            <div class="exchange-rate"><span id="exchangeRateLabelA">1 THB =</span><strong id="exchangeRateValueA">1 THB</strong><input id="exchangeRateA" type="hidden" value="1" /></div>
           </div>
           <div class="field coupon-field">
             <label for="couponA" id="couponALabel">ส่วนลดคูปอง</label>
@@ -110,7 +123,13 @@
           </div>
           <div class="field">
             <label for="priceB" id="priceBLabel">ราคา (บาท)</label>
-            <input id="priceB" type="number" min="0" step="0.01" placeholder="เช่น 159" />
+            <div class="price-input">
+              <input id="priceB" type="number" min="0" step="0.01" placeholder="เช่น 159" />
+              <select id="currencyB" aria-label="สกุลเงินสินค้า B">
+                <option value="THB" selected>THB</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="JPY">JPY</option><option value="CNY">CNY</option><option value="KRW">KRW</option><option value="GBP">GBP</option><option value="SGD">SGD</option>
+              </select>
+            </div>
+            <div class="exchange-rate"><span id="exchangeRateLabelB">1 THB =</span><strong id="exchangeRateValueB">1 THB</strong><input id="exchangeRateB" type="hidden" value="1" /></div>
           </div>
           <div class="field coupon-field">
             <label for="couponB" id="couponBLabel">ส่วนลดคูปอง</label>
@@ -176,7 +195,13 @@
           </div>
           <div class="field">
             <label for="priceC" id="priceCLabel">ราคา (บาท)</label>
-            <input id="priceC" type="number" min="0" step="0.01" placeholder="เช่น 189" />
+            <div class="price-input">
+              <input id="priceC" type="number" min="0" step="0.01" placeholder="เช่น 189" />
+              <select id="currencyC" aria-label="สกุลเงินสินค้า C">
+                <option value="THB" selected>THB</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="JPY">JPY</option><option value="CNY">CNY</option><option value="KRW">KRW</option><option value="GBP">GBP</option><option value="SGD">SGD</option>
+              </select>
+            </div>
+            <div class="exchange-rate"><span id="exchangeRateLabelC">1 THB =</span><strong id="exchangeRateValueC">1 THB</strong><input id="exchangeRateC" type="hidden" value="1" /></div>
           </div>
           <div class="field coupon-field">
             <label for="couponC" id="couponCLabel">ส่วนลดคูปอง</label>

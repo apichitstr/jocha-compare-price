@@ -3,10 +3,22 @@ const STORAGE_KEYS = {
   theme: "jocha_compare_theme",
   history: "jocha_compare_history",
   savedSets: "jocha_compare_saved_sets",
+  exchangeRates: "jocha_compare_exchange_rates",
 };
 
 const MAX_HISTORY = 20;
 const MAX_SAVED_SETS = 20;
+const EXCHANGE_RATE_API = "https://open.er-api.com/v6/latest/USD";
+const DEFAULT_EXCHANGE_RATES = {
+  THB: 1,
+  USD: 32.5,
+  EUR: 38,
+  JPY: 0.22,
+  CNY: 4.55,
+  KRW: 0.023,
+  GBP: 43,
+  SGD: 25.5,
+};
 
 const I18N = {
   th: {
@@ -24,7 +36,7 @@ const I18N = {
       productB: "สินค้า B",
       productC: "สินค้า C",
       name: "ชื่อสินค้า",
-      price: "ราคา (บาท)",
+      price: "ราคา",
       coupon: "ส่วนลดคูปอง",
       couponUnitBaht: "บาท",
       couponTypeA: "หน่วยส่วนลดคูปองสินค้า A",
@@ -52,6 +64,7 @@ const I18N = {
       unitFallback: "หน่วย",
       bahtPer: "บาท /",
       badInput: "กรุณากรอกข้อมูลราคา ปริมาตร และจำนวนชิ้นให้ถูกต้อง (มากกว่า 0)",
+      badExchangeRate: "กรุณากรอกอัตราแลกเปลี่ยนเป็นบาทให้มากกว่า 0",
       badUnit: "หน่วยของสินค้าไม่อยู่ในระบบที่รองรับ",
       unitMismatch: "หน่วยของสินค้าต้องเป็นประเภทที่เทียบกันได้ (เช่น ของเหลวกับน้ำหนักเทียบกันไม่ได้)",
       rank: "อันดับ",
@@ -68,6 +81,12 @@ const I18N = {
       loadSet: "เรียกใช้",
       deleteSet: "ลบ",
       defaultSetName: "ชุดสินค้า",
+      exchangeStatusTitle: "อัตราแลกเปลี่ยนออนไลน์",
+      exchangeLoading: "กำลังอัปเดต...",
+      exchangeUpdated: "อัปเดตล่าสุด",
+      exchangeCached: "เรตที่บันทึกล่าสุด",
+      exchangeFallback: "ออฟไลน์: ใช้อัตราสำรอง",
+      refreshRates: "รีเฟรชเรต",
       themeLight: "Light",
       themeDark: "Dark",
     },
@@ -87,7 +106,7 @@ const I18N = {
       productB: "Product B",
       productC: "Product C",
       name: "Product name",
-      price: "Price (THB)",
+      price: "Price",
       coupon: "Coupon discount",
       couponUnitBaht: "THB",
       couponTypeA: "Coupon discount unit for product A",
@@ -115,6 +134,7 @@ const I18N = {
       unitFallback: "unit",
       bahtPer: "THB /",
       badInput: "Please provide valid price, volume, and quantity values (greater than 0)",
+      badExchangeRate: "Please provide an exchange rate to THB greater than 0",
       badUnit: "The selected unit is not supported",
       unitMismatch: "All products must use comparable units (for example, liquid volume and weight cannot be compared directly)",
       rank: "Rank",
@@ -131,6 +151,12 @@ const I18N = {
       loadSet: "Load",
       deleteSet: "Delete",
       defaultSetName: "Product set",
+      exchangeStatusTitle: "Online exchange rates",
+      exchangeLoading: "Updating...",
+      exchangeUpdated: "Last updated",
+      exchangeCached: "Last saved rates",
+      exchangeFallback: "Offline: using fallback rates",
+      refreshRates: "Refresh rates",
       themeLight: "Light",
       themeDark: "Dark",
     },
@@ -142,6 +168,9 @@ let currentTheme = "light";
 let comparisonMode = "two";
 let calculationHistory = [];
 let savedProductSets = [];
+let exchangeRates = { ...DEFAULT_EXCHANGE_RATES };
+let exchangeRatesUpdatedAt = null;
+let exchangeRatesOnline = false;
 
 const ELEMENT_IDS = {
   eyebrowText: "eyebrow",
@@ -198,6 +227,8 @@ const ELEMENT_IDS = {
   historyEmpty: "historyEmpty",
   savedSetsTitle: "savedSetsTitle",
   saveSetBtn: "saveSet",
+  exchangeStatusTitle: "exchangeStatusTitle",
+  refreshRatesBtn: "refreshRates",
   themeLight: "themeLight",
   themeDark: "themeDark",
 };
@@ -288,6 +319,16 @@ function loadState() {
   } catch {
     savedProductSets = [];
   }
+
+  try {
+    const cachedRates = JSON.parse(localStorage.getItem(STORAGE_KEYS.exchangeRates));
+    if (cachedRates?.rates && Object.keys(DEFAULT_EXCHANGE_RATES).every((code) => Number(cachedRates.rates[code]) > 0)) {
+      exchangeRates = cachedRates.rates;
+      exchangeRatesUpdatedAt = cachedRates.updatedAt || null;
+    }
+  } catch {
+    exchangeRates = { ...DEFAULT_EXCHANGE_RATES };
+  }
 }
 
 function saveHistory() {
@@ -327,6 +368,7 @@ function applyLanguage() {
     if (couponType) {
       couponType.setAttribute("aria-label", t(`couponType${prefix}`) || `${t("coupon")} ${prefix}`);
     }
+    updateCurrencyUI(prefix);
   });
 
   document.getElementById("compareTwoLink").classList.toggle("active", comparisonMode === "two");
@@ -352,6 +394,7 @@ function applyLanguage() {
   renderHistory();
   document.getElementById("setNameInput").placeholder = t("setNamePlaceholder");
   renderSavedSets();
+  renderExchangeStatus();
 }
 
 function setLanguage(lang) {
@@ -412,8 +455,81 @@ function effectiveQty(modeName, qtyId) {
   return Number.isFinite(qty) && qty > 0 ? Math.floor(qty) : null;
 }
 
+function formatExchangeRate(value) {
+  const maximumFractionDigits = value < 0.1 ? 6 : value < 1 ? 4 : 2;
+  return new Intl.NumberFormat(I18N[currentLang].lang, { maximumFractionDigits }).format(value);
+}
+
+function updateCurrencyUI(prefix) {
+  const currency = document.getElementById(`currency${prefix}`).value;
+  const rate = exchangeRates[currency] || 1;
+  document.getElementById(`exchangeRateLabel${prefix}`).textContent = `1 ${currency} =`;
+  document.getElementById(`exchangeRateValue${prefix}`).textContent = `${formatExchangeRate(rate)} THB`;
+  document.getElementById(`couponAmount${prefix}`).textContent = currency;
+  document.getElementById(`exchangeRate${prefix}`).value = String(rate);
+}
+
+function bindCurrency(prefix) {
+  document.getElementById(`currency${prefix}`).addEventListener("change", () => updateCurrencyUI(prefix));
+  updateCurrencyUI(prefix);
+}
+
+function renderExchangeStatus() {
+  const status = document.getElementById("exchangeStatus");
+  if (!exchangeRatesUpdatedAt) {
+    status.textContent = t("exchangeFallback");
+    return;
+  }
+  const label = exchangeRatesOnline ? t("exchangeUpdated") : t("exchangeCached");
+  status.textContent = `${label}: ${new Date(exchangeRatesUpdatedAt).toLocaleString(I18N[currentLang].lang)}`;
+}
+
+async function refreshExchangeRates() {
+  const button = document.getElementById("refreshRatesBtn");
+  const status = document.getElementById("exchangeStatus");
+  button.disabled = true;
+  status.textContent = t("exchangeLoading");
+
+  try {
+    const response = await fetch(EXCHANGE_RATE_API, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("Exchange rate request failed");
+    }
+    const data = await response.json();
+    const usdRates = { USD: 1, ...data.rates };
+    if (data.result !== "success" || !Number(usdRates.THB)) {
+      throw new Error("Invalid exchange rate response");
+    }
+
+    const onlineRates = {};
+    Object.keys(DEFAULT_EXCHANGE_RATES).forEach((currency) => {
+      const currencyPerUsd = Number(usdRates[currency]);
+      onlineRates[currency] = currency === "THB" ? 1 : Number(usdRates.THB) / currencyPerUsd;
+      if (!Number.isFinite(onlineRates[currency]) || onlineRates[currency] <= 0) {
+        throw new Error(`Missing exchange rate for ${currency}`);
+      }
+    });
+
+    exchangeRates = onlineRates;
+    exchangeRatesUpdatedAt = data.time_last_update_utc || new Date().toISOString();
+    exchangeRatesOnline = true;
+    localStorage.setItem(STORAGE_KEYS.exchangeRates, JSON.stringify({
+      rates: exchangeRates,
+      updatedAt: exchangeRatesUpdatedAt,
+    }));
+    ["A", "B", "C"].forEach(updateCurrencyUI);
+  } catch {
+    exchangeRatesOnline = false;
+  } finally {
+    button.disabled = false;
+    renderExchangeStatus();
+  }
+}
+
 function getProductData(prefix) {
   const price = parsePositiveNumber(`price${prefix}`);
+  const currency = document.getElementById(`currency${prefix}`).value;
+  const exchangeRate = parsePositiveNumber(`exchangeRate${prefix}`);
   const couponRaw = document.getElementById(`coupon${prefix}`).value;
   const couponValue = couponRaw === "" ? 0 : Number(couponRaw);
   const couponType = document.getElementById(`couponType${prefix}`).value;
@@ -431,6 +547,10 @@ function getProductData(prefix) {
     return { error: t("badInput") };
   }
 
+  if (!exchangeRate) {
+    return { error: t("badExchangeRate") };
+  }
+
   if (!unitMeta) {
     return { error: t("badUnit") };
   }
@@ -438,15 +558,19 @@ function getProductData(prefix) {
   const totalVolume = volume * qty * factor;
   const totalVolumeBase = totalVolume * unitMeta.toBase;
   const couponDiscount = couponType === "percent" ? price * couponValue / 100 : couponValue;
-  const finalPrice = Math.max(0, price - couponDiscount);
+  const finalPriceOriginal = Math.max(0, price - couponDiscount);
+  const finalPrice = finalPriceOriginal * exchangeRate;
   const costPerUnit = finalPrice / totalVolumeBase;
 
   return {
     name,
     price,
+    currency,
+    exchangeRate,
     couponValue,
     couponType,
     finalPrice,
+    finalPriceOriginal,
     volume,
     factor,
     unit,
@@ -474,7 +598,10 @@ function renderResult(products, unitLabel) {
 
   products.forEach((product, index) => {
     const prefix = ["A", "B", "C"][index];
-    document.getElementById(`cpu${prefix}`).textContent = `${formatNumber(product.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel} (${t("afterCoupon")}: ${formatNumber(product.finalPrice)} ${t("couponUnitBaht")})`;
+    const convertedPrice = product.currency === "THB"
+      ? `${formatNumber(product.finalPrice)} THB`
+      : `${formatNumber(product.finalPriceOriginal)} ${product.currency} = ${formatNumber(product.finalPrice)} THB`;
+    document.getElementById(`cpu${prefix}`).textContent = `${formatNumber(product.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel} (${t("afterCoupon")}: ${convertedPrice})`;
   });
 
   summary.classList.remove("win", "tie", "error");
@@ -641,6 +768,8 @@ function captureProductForm(prefix) {
   return {
     name: document.getElementById(`name${prefix}`).value,
     price: document.getElementById(`price${prefix}`).value,
+    currency: document.getElementById(`currency${prefix}`).value,
+    exchangeRate: document.getElementById(`exchangeRate${prefix}`).value,
     coupon: document.getElementById(`coupon${prefix}`).value,
     couponType: document.getElementById(`couponType${prefix}`).value,
     volume: document.getElementById(`volume${prefix}`).value,
@@ -673,6 +802,8 @@ function restoreProductForm(prefix, product) {
   }
   document.getElementById(`name${prefix}`).value = product.name ?? "";
   document.getElementById(`price${prefix}`).value = product.price ?? "";
+  document.getElementById(`currency${prefix}`).value = DEFAULT_EXCHANGE_RATES[product.currency] ? product.currency : "THB";
+  updateCurrencyUI(prefix);
   document.getElementById(`coupon${prefix}`).value = product.coupon ?? "";
   document.getElementById(`couponType${prefix}`).value = product.couponType === "amount" ? "amount" : "percent";
   document.getElementById(`volume${prefix}`).value = product.volume ?? "";
@@ -780,6 +911,9 @@ function resetForm() {
   getProductPrefixes().forEach((prefix) => {
     document.getElementById(`name${prefix}`).value = I18N[currentLang].defaults[prefix.toLowerCase()];
     document.getElementById(`price${prefix}`).value = "";
+    document.getElementById(`currency${prefix}`).value = "THB";
+    document.getElementById(`exchangeRate${prefix}`).value = "1";
+    updateCurrencyUI(prefix);
     document.getElementById(`coupon${prefix}`).value = "";
     document.getElementById(`couponType${prefix}`).value = "percent";
     document.getElementById(`volume${prefix}`).value = "";
@@ -804,6 +938,7 @@ function init() {
   ["A", "B", "C"].forEach((prefix) => {
     bindModeToggle(prefix);
     bindFactorToggle(prefix);
+    bindCurrency(prefix);
   });
   applyLanguage();
   resetForm();
@@ -821,7 +956,9 @@ function init() {
   document.getElementById("langEN").addEventListener("click", () => setLanguage("en"));
   document.getElementById("themeLight").addEventListener("click", () => setTheme("light"));
   document.getElementById("themeDark").addEventListener("click", () => setTheme("dark"));
+  document.getElementById("refreshRatesBtn").addEventListener("click", refreshExchangeRates);
   setComparisonMode("two");
+  refreshExchangeRates();
 }
 
 init();

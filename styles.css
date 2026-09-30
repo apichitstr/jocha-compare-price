@@ -213,6 +213,38 @@ h1 {
   padding: 18px;
 }
 
+.exchange-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--field-border);
+  border-radius: 10px;
+  background: var(--history-item-bg);
+}
+
+.exchange-toolbar strong,
+.exchange-toolbar span {
+  display: block;
+}
+
+.exchange-toolbar strong {
+  color: var(--history-main);
+}
+
+.exchange-toolbar span {
+  margin-top: 2px;
+  color: var(--history-sub);
+  font-size: 0.82rem;
+}
+
+.exchange-toolbar button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .unit-row {
   margin-bottom: 12px;
 }
@@ -266,6 +298,24 @@ h1 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 88px;
   gap: 8px;
+}
+
+.price-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: 8px;
+}
+
+.exchange-rate {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: var(--label);
+}
+
+.exchange-rate strong {
+  color: var(--metric-value);
 }
 
 .factor-toggle {
@@ -663,6 +713,11 @@ button.ghost {
 
   .history-head {
     align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .exchange-toolbar {
+    align-items: stretch;
     flex-direction: column;
   }
 
