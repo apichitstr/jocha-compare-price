@@ -1,0 +1,29 @@
+{
+  "id": "./",
+  "name": "Jocha Compares Prices",
+  "short_name": "Jocha",
+  "description": "เปรียบเทียบราคาสินค้าและต้นทุนต่อหน่วย เพื่อเลือกตัวเลือกที่คุ้มค่าที่สุด",
+  "lang": "th",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#edf5ff",
+  "theme_color": "#126f91",
+  "categories": ["shopping", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
