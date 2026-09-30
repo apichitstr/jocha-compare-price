@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
 const MAX_HISTORY = 20;
 const MAX_SAVED_SETS = 20;
 const EXCHANGE_RATE_API = "https://open.er-api.com/v6/latest/USD";
+const DEPLOYED_APP_URL = "https://apichitstr.github.io/jocha-compare-price/";
 const DEFAULT_EXCHANGE_RATES = {
   THB: 1,
   USD: 32.5,
@@ -38,6 +39,7 @@ const I18N = {
       name: "ชื่อสินค้า",
       price: "ราคา",
       coupon: "ส่วนลดคูปอง",
+      couponToggle: "ใช้ส่วนลดคูปอง",
       couponUnitBaht: "บาท",
       couponTypeA: "หน่วยส่วนลดคูปองสินค้า A",
       couponTypeB: "หน่วยส่วนลดคูปองสินค้า B",
@@ -52,10 +54,13 @@ const I18N = {
       calcBtn: "คำนวณความคุ้มค่า",
       resetBtn: "ล้างค่า",
       resultTitle: "ผลการเปรียบเทียบ",
-      cpuA: "ต้นทุนต่อหน่วยของ A",
-      cpuB: "ต้นทุนต่อหน่วยของ B",
-      cpuC: "ต้นทุนต่อหน่วยของ C",
-      afterCoupon: "หลังหักคูปอง",
+      chartTitle: "กราฟเปรียบเทียบต้นทุนต่อหน่วย",
+      lowerIsBetter: "ต้นทุนยิ่งต่ำ ยิ่งคุ้มค่า",
+      bestValue: "คุ้มที่สุด",
+      shareResult: "คัดลอกลิงก์ผลลัพธ์",
+      shareCopied: "คัดลอกลิงก์แล้ว",
+      shareFailed: "คัดลอกไม่สำเร็จ",
+      invalidShareLink: "ลิงก์ผลลัพธ์ไม่ถูกต้องหรือข้อมูลไม่ครบ",
       summaryTitle: "สรุป",
       summaryIdle: "กรอกข้อมูลแล้วกดคำนวณ",
       tie: "ความคุ้มค่าเท่ากันพอดี",
@@ -110,6 +115,7 @@ const I18N = {
       name: "Product name",
       price: "Price",
       coupon: "Coupon discount",
+      couponToggle: "Use coupon discount",
       couponUnitBaht: "THB",
       couponTypeA: "Coupon discount unit for product A",
       couponTypeB: "Coupon discount unit for product B",
@@ -124,10 +130,13 @@ const I18N = {
       calcBtn: "Calculate value",
       resetBtn: "Reset",
       resultTitle: "Comparison Result",
-      cpuA: "Cost per unit of A",
-      cpuB: "Cost per unit of B",
-      cpuC: "Cost per unit of C",
-      afterCoupon: "after coupon",
+      chartTitle: "Cost per unit comparison",
+      lowerIsBetter: "Lower cost means better value",
+      bestValue: "Best value",
+      shareResult: "Copy result link",
+      shareCopied: "Link copied",
+      shareFailed: "Could not copy link",
+      invalidShareLink: "This result link is invalid or incomplete",
       summaryTitle: "Summary",
       summaryIdle: "Fill in values and click calculate",
       tie: "Both products have equal value",
@@ -175,6 +184,8 @@ let savedProductSets = [];
 let exchangeRates = { ...DEFAULT_EXCHANGE_RATES };
 let exchangeRatesUpdatedAt = null;
 let exchangeRatesOnline = false;
+let lastChartData = null;
+let lastChartUnitLabel = "";
 
 const ELEMENT_IDS = {
   eyebrowText: "eyebrow",
@@ -187,6 +198,8 @@ const ELEMENT_IDS = {
   nameBLabel: "name",
   priceALabel: "price",
   priceBLabel: "price",
+  couponToggleALabel: "couponToggle",
+  couponToggleBLabel: "couponToggle",
   couponALabel: "coupon",
   couponBLabel: "coupon",
   couponAmountA: "couponUnitBaht",
@@ -209,6 +222,7 @@ const ELEMENT_IDS = {
   qtyBLabel: "qty",
   nameCLabel: "name",
   priceCLabel: "price",
+  couponToggleCLabel: "couponToggle",
   couponCLabel: "coupon",
   couponAmountC: "couponUnitBaht",
   volumeCLabel: "volume",
@@ -222,10 +236,10 @@ const ELEMENT_IDS = {
   calcBtn: "calcBtn",
   resetBtn: "resetBtn",
   resultTitle: "resultTitle",
-  cpuATitle: "cpuA",
-  cpuBTitle: "cpuB",
-  cpuCTitle: "cpuC",
   summaryTitle: "summaryTitle",
+  chartTitle: "chartTitle",
+  chartHint: "lowerIsBetter",
+  shareResultBtn: "shareResult",
   historyTitle: "historyTitle",
   clearHistoryBtn: "historyClear",
   historyEmpty: "historyEmpty",
@@ -277,16 +291,35 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function encodeSharePayload(payload) {
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+}
+
+function decodeSharePayload(value) {
+  if (!value || value.length > 12000) {
+    throw new Error("Invalid share payload");
+  }
+  const base64 = value.replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  const binary = atob(base64);
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
 function getProductPrefixes() {
   return comparisonMode === "three" ? ["A", "B", "C"] : ["A", "B"];
 }
 
 function setComparisonMode(mode) {
   comparisonMode = mode === "three" ? "three" : "two";
+  clearCostChart();
   const isThreeProductMode = comparisonMode === "three";
   document.body.classList.toggle("three-product-mode", isThreeProductMode);
   document.getElementById("cardC").hidden = !isThreeProductMode;
-  document.getElementById("metricC").hidden = !isThreeProductMode;
 
   const compareTwo = document.getElementById("compareTwoLink");
   const compareThree = document.getElementById("compareThreeLink");
@@ -401,6 +434,9 @@ function applyLanguage() {
   document.getElementById("closeSavedSetsBtn").setAttribute("aria-label", t("closeSavedSets"));
   renderSavedSets();
   renderExchangeStatus();
+  if (lastChartData) {
+    renderCostChart(lastChartData, lastChartUnitLabel);
+  }
 }
 
 function setLanguage(lang) {
@@ -541,7 +577,9 @@ function getProductData(prefix) {
   const price = parsePositiveNumber(`price${prefix}`);
   const currency = document.getElementById(`currency${prefix}`).value;
   const exchangeRate = parsePositiveNumber(`exchangeRate${prefix}`);
-  const couponRaw = document.getElementById(`coupon${prefix}`).value;
+  const couponRaw = document.getElementById(`couponEnabled${prefix}`).checked
+    ? document.getElementById(`coupon${prefix}`).value
+    : "";
   const couponValue = couponRaw === "" ? 0 : Number(couponRaw);
   const couponType = document.getElementById(`couponType${prefix}`).value;
   const volume = parsePositiveNumber(`volume${prefix}`);
@@ -595,25 +633,15 @@ function getProductData(prefix) {
 
 function showError(message) {
   document.getElementById("results").classList.remove("result-ready");
+  clearCostChart();
   const summary = document.getElementById("summaryText");
-  getProductPrefixes().forEach((prefix) => {
-    document.getElementById(`cpu${prefix}`).textContent = "-";
-  });
   summary.classList.remove("win", "tie", "error");
   summary.classList.add("error");
   summary.textContent = message;
 }
 
-function renderResult(products, unitLabel) {
+function renderResult(products) {
   const summary = document.getElementById("summaryText");
-
-  products.forEach((product, index) => {
-    const prefix = ["A", "B", "C"][index];
-    const convertedPrice = product.currency === "THB"
-      ? `${formatNumber(product.finalPrice)} THB`
-      : `${formatNumber(product.finalPriceOriginal)} ${product.currency} = ${formatNumber(product.finalPrice)} THB`;
-    document.getElementById(`cpu${prefix}`).textContent = `${formatNumber(product.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel} (${t("afterCoupon")}: ${convertedPrice})`;
-  });
 
   summary.classList.remove("win", "tie", "error");
 
@@ -667,6 +695,64 @@ function renderResult(products, unitLabel) {
   return { winner: winner.name, betterPercent, summary: summary.textContent };
 }
 
+function renderCostChart(products, unitLabel) {
+  lastChartData = products.map((product) => ({ name: product.name, costPerUnit: product.costPerUnit }));
+  lastChartUnitLabel = unitLabel;
+  const ranked = [...lastChartData].sort((first, second) => first.costPerUnit - second.costPerUnit);
+  const highestCost = Math.max(...ranked.map((product) => product.costPerUnit));
+  const rows = document.getElementById("costChartRows");
+  rows.replaceChildren();
+
+  let rank = 1;
+  ranked.forEach((product, index) => {
+    if (index > 0 && Math.abs(product.costPerUnit - ranked[index - 1].costPerUnit) >= 1e-12) {
+      rank = index + 1;
+    }
+    const isBest = Math.abs(product.costPerUnit - ranked[0].costPerUnit) < 1e-12;
+    const row = document.createElement("div");
+    row.className = `chart-row${isBest ? " chart-row-best" : ""}`;
+
+    const heading = document.createElement("div");
+    heading.className = "chart-row-heading";
+    const name = document.createElement("strong");
+    name.textContent = `${rank}. ${product.name}`;
+    const value = document.createElement("span");
+    value.textContent = `${formatNumber(product.costPerUnit, 4)} ${t("bahtPer")} ${unitLabel}`;
+    heading.append(name, value);
+
+    const track = document.createElement("div");
+    track.className = "chart-track";
+    const bar = document.createElement("div");
+    bar.className = "chart-bar";
+    const relativeWidth = highestCost > 0 ? product.costPerUnit / highestCost * 100 : 100;
+    bar.style.width = `${Math.max(12, relativeWidth)}%`;
+    bar.setAttribute("role", "img");
+    bar.setAttribute("aria-label", `${product.name}: ${value.textContent}`);
+    if (isBest) {
+      const badge = document.createElement("span");
+      badge.className = "chart-best-badge";
+      badge.textContent = t("bestValue");
+      bar.append(badge);
+    }
+    track.append(bar);
+    row.append(heading, track);
+    rows.append(row);
+  });
+
+  document.getElementById("costChart").hidden = false;
+  document.getElementById("shareResultBtn").hidden = false;
+}
+
+function clearCostChart() {
+  lastChartData = null;
+  lastChartUnitLabel = "";
+  const chart = document.getElementById("costChart");
+  chart.hidden = true;
+  document.getElementById("shareResultBtn").hidden = true;
+  document.getElementById("shareStatus").textContent = "";
+  document.getElementById("costChartRows").replaceChildren();
+}
+
 function animateResults() {
   const results = document.getElementById("results");
   results.classList.remove("result-ready");
@@ -674,21 +760,33 @@ function animateResults() {
   results.classList.add("result-ready");
 }
 
-function bindModeToggle(prefix) {
-  const radios = document.querySelectorAll(`input[name="mode${prefix}"]`);
+function updateModeVisibility(prefix) {
   const qtyInput = document.getElementById(`qty${prefix}`);
-
-  function refresh() {
-    const mode = getMode(`mode${prefix}`);
-    const isPack = mode === "pack";
-    qtyInput.disabled = !isPack;
-    if (!isPack) {
-      qtyInput.value = "1";
-    }
+  const isPack = getMode(`mode${prefix}`) === "pack";
+  document.getElementById(`packWrap${prefix}`).hidden = !isPack;
+  qtyInput.disabled = !isPack;
+  if (!isPack) {
+    qtyInput.value = "1";
   }
+}
 
-  radios.forEach((r) => r.addEventListener("change", refresh));
-  refresh();
+function bindModeToggle(prefix) {
+  document.querySelectorAll(`input[name="mode${prefix}"]`).forEach((radio) => {
+    radio.addEventListener("change", () => updateModeVisibility(prefix));
+  });
+  updateModeVisibility(prefix);
+}
+
+function updateCouponVisibility(prefix) {
+  const enabled = document.getElementById(`couponEnabled${prefix}`).checked;
+  document.getElementById(`couponWrap${prefix}`).hidden = !enabled;
+  document.getElementById(`coupon${prefix}`).disabled = !enabled;
+  document.getElementById(`couponType${prefix}`).disabled = !enabled;
+}
+
+function bindCouponToggle(prefix) {
+  document.getElementById(`couponEnabled${prefix}`).addEventListener("change", () => updateCouponVisibility(prefix));
+  updateCouponVisibility(prefix);
 }
 
 function updateFactorVisibility(prefix) {
@@ -781,6 +879,7 @@ function captureProductForm(prefix) {
     price: document.getElementById(`price${prefix}`).value,
     currency: document.getElementById(`currency${prefix}`).value,
     exchangeRate: document.getElementById(`exchangeRate${prefix}`).value,
+    couponEnabled: document.getElementById(`couponEnabled${prefix}`).checked,
     coupon: document.getElementById(`coupon${prefix}`).value,
     couponType: document.getElementById(`couponType${prefix}`).value,
     volume: document.getElementById(`volume${prefix}`).value,
@@ -829,6 +928,7 @@ function restoreProductForm(prefix, product) {
   document.getElementById(`price${prefix}`).value = product.price ?? "";
   document.getElementById(`currency${prefix}`).value = DEFAULT_EXCHANGE_RATES[product.currency] ? product.currency : "THB";
   updateCurrencyUI(prefix);
+  document.getElementById(`couponEnabled${prefix}`).checked = product.couponEnabled ?? Boolean(product.coupon);
   document.getElementById(`coupon${prefix}`).value = product.coupon ?? "";
   document.getElementById(`couponType${prefix}`).value = product.couponType === "amount" ? "amount" : "percent";
   document.getElementById(`volume${prefix}`).value = product.volume ?? "";
@@ -838,7 +938,8 @@ function restoreProductForm(prefix, product) {
   const mode = product.mode === "pack" ? "pack" : "single";
   document.querySelector(`input[name="mode${prefix}"][value="${mode}"]`).checked = true;
   document.getElementById(`qty${prefix}`).value = product.qty || "1";
-  document.getElementById(`qty${prefix}`).disabled = mode !== "pack";
+  updateCouponVisibility(prefix);
+  updateModeVisibility(prefix);
   updateFactorVisibility(prefix);
 }
 
@@ -850,9 +951,6 @@ function loadProductSet(id) {
   setComparisonMode(savedSet.comparisonMode);
   getProductPrefixes().forEach((prefix) => restoreProductForm(prefix, savedSet.products?.[prefix]));
   document.getElementById("results").classList.remove("result-ready");
-  getProductPrefixes().forEach((prefix) => {
-    document.getElementById(`cpu${prefix}`).textContent = "-";
-  });
   const summary = document.getElementById("summaryText");
   summary.classList.remove("win", "tie", "error");
   summary.textContent = t("summaryIdle");
@@ -898,7 +996,8 @@ function handleSavedSetAction(event) {
   }
 }
 
-function calculate() {
+function calculate(options = {}) {
+  const addToHistory = options.addToHistory !== false;
   const products = getProductPrefixes().map((prefix) => ({
     prefix,
     data: getProductData(prefix),
@@ -919,8 +1018,12 @@ function calculate() {
 
   const unitLabel = BASE_UNITS[productData[0].unitMeta.dimension] || t("unitFallback");
 
-  const result = renderResult(productData, unitLabel);
+  const result = renderResult(productData);
+  renderCostChart(productData, unitLabel);
   animateResults();
+  if (!addToHistory) {
+    return;
+  }
   const unitInfo = productData.map((product) => `${product.name} (${product.unit})`).join(" vs ");
   addHistoryEntry({
     time: new Date().toISOString(),
@@ -932,16 +1035,103 @@ function calculate() {
   });
 }
 
+function createShareUrl() {
+  const rates = Object.fromEntries(Object.keys(DEFAULT_EXCHANGE_RATES).map((currency) => [currency, exchangeRates[currency]]));
+  const payload = {
+    version: 1,
+    lang: currentLang,
+    comparisonMode,
+    exchangeRates: rates,
+    exchangeRatesUpdatedAt,
+    products: Object.fromEntries(getProductPrefixes().map((prefix) => [prefix, captureProductForm(prefix)])),
+  };
+  const shareHash = new URLSearchParams({ share: encodeSharePayload(payload) }).toString();
+  const localUrl = new URL(window.location.href);
+  localUrl.hash = shareHash;
+  window.history.replaceState(null, "", localUrl);
+
+  const shareUrl = new URL(window.location.protocol === "file:" ? DEPLOYED_APP_URL : window.location.href);
+  shareUrl.hash = shareHash;
+  return shareUrl.toString();
+}
+
+async function copyShareLink() {
+  const status = document.getElementById("shareStatus");
+  const url = createShareUrl();
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.append(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      if (!copied) {
+        throw new Error("Copy failed");
+      }
+    }
+    status.textContent = t("shareCopied");
+  } catch (error) {
+    status.textContent = t("shareFailed");
+  }
+}
+
+function loadSharedComparison() {
+  const encoded = new URLSearchParams(window.location.hash.slice(1)).get("share");
+  if (!encoded) {
+    return false;
+  }
+
+  try {
+    const payload = decodeSharePayload(encoded);
+    const prefixes = payload.comparisonMode === "three" ? ["A", "B", "C"] : ["A", "B"];
+    if (payload.version !== 1 || !payload.products || prefixes.some((prefix) => !payload.products[prefix])) {
+      throw new Error("Invalid shared comparison");
+    }
+
+    const rates = {};
+    Object.keys(DEFAULT_EXCHANGE_RATES).forEach((currency) => {
+      const rate = Number(payload.exchangeRates?.[currency]);
+      if (!Number.isFinite(rate) || rate <= 0) {
+        throw new Error("Invalid shared exchange rates");
+      }
+      rates[currency] = rate;
+    });
+
+    exchangeRates = rates;
+    exchangeRatesUpdatedAt = typeof payload.exchangeRatesUpdatedAt === "string" ? payload.exchangeRatesUpdatedAt : null;
+    exchangeRatesOnline = false;
+    if (I18N[payload.lang]) {
+      currentLang = payload.lang;
+    }
+    setComparisonMode(payload.comparisonMode);
+    prefixes.forEach((prefix) => restoreProductForm(prefix, payload.products[prefix]));
+    applyLanguage();
+    calculate({ addToHistory: false });
+    return true;
+  } catch (error) {
+    showError(t("invalidShareLink"));
+    return false;
+  }
+}
+
 function resetForm() {
   document.getElementById("results").classList.remove("result-ready");
+  clearCostChart();
   getProductPrefixes().forEach((prefix) => {
     document.getElementById(`name${prefix}`).value = I18N[currentLang].defaults[prefix.toLowerCase()];
     document.getElementById(`price${prefix}`).value = "";
     document.getElementById(`currency${prefix}`).value = "THB";
     document.getElementById(`exchangeRate${prefix}`).value = "1";
     updateCurrencyUI(prefix);
+    document.getElementById(`couponEnabled${prefix}`).checked = false;
     document.getElementById(`coupon${prefix}`).value = "";
     document.getElementById(`couponType${prefix}`).value = "percent";
+    updateCouponVisibility(prefix);
     document.getElementById(`volume${prefix}`).value = "";
     document.getElementById(`factor${prefix}`).value = "1.0";
     document.getElementById(`factorEnabled${prefix}`).checked = false;
@@ -949,8 +1139,7 @@ function resetForm() {
     document.getElementById(`unit${prefix}`).value = "ml";
     document.querySelector(`input[name="mode${prefix}"][value="single"]`).checked = true;
     document.getElementById(`qty${prefix}`).value = "1";
-    document.getElementById(`qty${prefix}`).disabled = true;
-    document.getElementById(`cpu${prefix}`).textContent = "-";
+    updateModeVisibility(prefix);
   });
 
   const summary = document.getElementById("summaryText");
@@ -963,6 +1152,7 @@ function init() {
   applyTheme();
   ["A", "B", "C"].forEach((prefix) => {
     bindModeToggle(prefix);
+    bindCouponToggle(prefix);
     bindFactorToggle(prefix);
     bindCurrency(prefix);
   });
@@ -971,6 +1161,7 @@ function init() {
 
   document.getElementById("calcBtn").addEventListener("click", calculate);
   document.getElementById("resetBtn").addEventListener("click", resetForm);
+  document.getElementById("shareResultBtn").addEventListener("click", copyShareLink);
   document.getElementById("openSavedSetsBtn").addEventListener("click", openSavedSetsModal);
   document.getElementById("closeSavedSetsBtn").addEventListener("click", closeSavedSetsModal);
   document.getElementById("saveSetBtn").addEventListener("click", saveCurrentProductSet);
@@ -996,7 +1187,9 @@ function init() {
     }
   });
   setComparisonMode("two");
-  refreshExchangeRates();
+  if (!loadSharedComparison()) {
+    refreshExchangeRates();
+  }
 }
 
 init();

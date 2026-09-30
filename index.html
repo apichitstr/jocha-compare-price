@@ -60,13 +60,19 @@
             <div class="exchange-rate"><span id="exchangeRateLabelA">1 THB =</span><strong id="exchangeRateValueA">1 THB</strong><input id="exchangeRateA" type="hidden" value="1" /></div>
           </div>
           <div class="field coupon-field">
-            <label for="couponA" id="couponALabel">ส่วนลดคูปอง</label>
-            <div class="coupon-input">
-              <input id="couponA" type="number" min="0" step="0.01" placeholder="0" />
-              <select id="couponTypeA" aria-label="หน่วยส่วนลดคูปองสินค้า A">
-                <option value="percent">%</option>
-                <option id="couponAmountA" value="amount">บาท</option>
-              </select>
+            <label class="factor-toggle" for="couponEnabledA">
+              <input id="couponEnabledA" type="checkbox" />
+              <span id="couponToggleALabel">ใช้ส่วนลดคูปอง</span>
+            </label>
+            <div id="couponWrapA" class="coupon-details" hidden>
+              <label for="couponA" id="couponALabel">ส่วนลดคูปอง</label>
+              <div class="coupon-input">
+                <input id="couponA" type="number" min="0" step="0.01" placeholder="0" disabled />
+                <select id="couponTypeA" aria-label="หน่วยส่วนลดคูปองสินค้า A" disabled>
+                  <option value="percent">%</option>
+                  <option id="couponAmountA" value="amount">บาท</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="field">
@@ -109,7 +115,7 @@
             <label id="modeASingleLabel"><input type="radio" name="modeA" value="single" checked /> ชิ้นเดียว</label>
             <label id="modeAPackLabel"><input type="radio" name="modeA" value="pack" /> แบบแพ็ก</label>
           </fieldset>
-          <div class="field" id="packWrapA">
+          <div class="field" id="packWrapA" hidden>
             <label for="qtyA" id="qtyALabel">จำนวนชิ้นในแพ็ก</label>
             <input id="qtyA" type="number" min="1" step="1" value="1" disabled />
           </div>
@@ -132,13 +138,19 @@
             <div class="exchange-rate"><span id="exchangeRateLabelB">1 THB =</span><strong id="exchangeRateValueB">1 THB</strong><input id="exchangeRateB" type="hidden" value="1" /></div>
           </div>
           <div class="field coupon-field">
-            <label for="couponB" id="couponBLabel">ส่วนลดคูปอง</label>
-            <div class="coupon-input">
-              <input id="couponB" type="number" min="0" step="0.01" placeholder="0" />
-              <select id="couponTypeB" aria-label="หน่วยส่วนลดคูปองสินค้า B">
-                <option value="percent">%</option>
-                <option id="couponAmountB" value="amount">บาท</option>
-              </select>
+            <label class="factor-toggle" for="couponEnabledB">
+              <input id="couponEnabledB" type="checkbox" />
+              <span id="couponToggleBLabel">ใช้ส่วนลดคูปอง</span>
+            </label>
+            <div id="couponWrapB" class="coupon-details" hidden>
+              <label for="couponB" id="couponBLabel">ส่วนลดคูปอง</label>
+              <div class="coupon-input">
+                <input id="couponB" type="number" min="0" step="0.01" placeholder="0" disabled />
+                <select id="couponTypeB" aria-label="หน่วยส่วนลดคูปองสินค้า B" disabled>
+                  <option value="percent">%</option>
+                  <option id="couponAmountB" value="amount">บาท</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="field">
@@ -181,7 +193,7 @@
             <label id="modeBSingleLabel"><input type="radio" name="modeB" value="single" checked /> ชิ้นเดียว</label>
             <label id="modeBPackLabel"><input type="radio" name="modeB" value="pack" /> แบบแพ็ก</label>
           </fieldset>
-          <div class="field" id="packWrapB">
+          <div class="field" id="packWrapB" hidden>
             <label for="qtyB" id="qtyBLabel">จำนวนชิ้นในแพ็ก</label>
             <input id="qtyB" type="number" min="1" step="1" value="1" disabled />
           </div>
@@ -204,13 +216,19 @@
             <div class="exchange-rate"><span id="exchangeRateLabelC">1 THB =</span><strong id="exchangeRateValueC">1 THB</strong><input id="exchangeRateC" type="hidden" value="1" /></div>
           </div>
           <div class="field coupon-field">
-            <label for="couponC" id="couponCLabel">ส่วนลดคูปอง</label>
-            <div class="coupon-input">
-              <input id="couponC" type="number" min="0" step="0.01" placeholder="0" />
-              <select id="couponTypeC" aria-label="หน่วยส่วนลดคูปองสินค้า C">
-                <option value="percent">%</option>
-                <option id="couponAmountC" value="amount">บาท</option>
-              </select>
+            <label class="factor-toggle" for="couponEnabledC">
+              <input id="couponEnabledC" type="checkbox" />
+              <span id="couponToggleCLabel">ใช้ส่วนลดคูปอง</span>
+            </label>
+            <div id="couponWrapC" class="coupon-details" hidden>
+              <label for="couponC" id="couponCLabel">ส่วนลดคูปอง</label>
+              <div class="coupon-input">
+                <input id="couponC" type="number" min="0" step="0.01" placeholder="0" disabled />
+                <select id="couponTypeC" aria-label="หน่วยส่วนลดคูปองสินค้า C" disabled>
+                  <option value="percent">%</option>
+                  <option id="couponAmountC" value="amount">บาท</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="field">
@@ -253,7 +271,7 @@
             <label id="modeCSingleLabel"><input type="radio" name="modeC" value="single" checked /> ชิ้นเดียว</label>
             <label id="modeCPackLabel"><input type="radio" name="modeC" value="pack" /> แบบแพ็ก</label>
           </fieldset>
-          <div class="field" id="packWrapC">
+          <div class="field" id="packWrapC" hidden>
             <label for="qtyC" id="qtyCLabel">จำนวนชิ้นในแพ็ก</label>
             <input id="qtyC" type="number" min="1" step="1" value="1" disabled />
           </div>
@@ -274,18 +292,17 @@
           <p class="metric-title" id="summaryTitle">สรุป</p>
           <p class="summary" id="summaryText">กรอกข้อมูลแล้วกดคำนวณ</p>
         </div>
-        <div class="metric">
-          <p class="metric-title" id="cpuATitle">ต้นทุนต่อหน่วยของ A</p>
-          <p class="metric-value" id="cpuA">-</p>
+      </div>
+      <section id="costChart" class="cost-chart" aria-labelledby="chartTitle" hidden>
+        <div class="chart-head">
+          <h4 id="chartTitle">กราฟเปรียบเทียบต้นทุนต่อหน่วย</h4>
+          <p id="chartHint">ต้นทุนยิ่งต่ำ ยิ่งคุ้มค่า</p>
         </div>
-        <div class="metric">
-          <p class="metric-title" id="cpuBTitle">ต้นทุนต่อหน่วยของ B</p>
-          <p class="metric-value" id="cpuB">-</p>
-        </div>
-        <div class="metric" id="metricC" hidden>
-          <p class="metric-title" id="cpuCTitle">ต้นทุนต่อหน่วยของ C</p>
-          <p class="metric-value" id="cpuC">-</p>
-        </div>
+        <div id="costChartRows" class="chart-rows"></div>
+      </section>
+      <div class="result-actions">
+        <button id="shareResultBtn" type="button" class="ghost" hidden>คัดลอกลิงก์ผลลัพธ์</button>
+        <span id="shareStatus" class="share-status" aria-live="polite"></span>
       </div>
     </section>
 

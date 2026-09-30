@@ -344,6 +344,16 @@ h1 {
   gap: 8px;
 }
 
+.coupon-details {
+  display: grid;
+  gap: 6px;
+}
+
+.coupon-details[hidden],
+.field[hidden] {
+  display: none;
+}
+
 .price-input {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 88px;
@@ -689,10 +699,6 @@ body.modal-open {
   gap: 12px;
 }
 
-.three-product-mode .result-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
 .metric {
   background: var(--metric-bg);
   border-radius: 12px;
@@ -702,18 +708,6 @@ body.modal-open {
 
 .result-ready .metric {
   animation: metric-reveal 520ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
-}
-
-.result-ready .metric:nth-child(2) {
-  animation-delay: 90ms;
-}
-
-.result-ready .metric:nth-child(3) {
-  animation-delay: 180ms;
-}
-
-.result-ready .metric:nth-child(4) {
-  animation-delay: 270ms;
 }
 
 .metric.wide {
@@ -729,12 +723,6 @@ body.modal-open {
   margin: 0;
   color: var(--metric-title);
   font-size: 0.9rem;
-}
-
-.metric-value {
-  margin: 5px 0 0;
-  font: 700 1.2rem "Kanit", sans-serif;
-  color: var(--metric-value);
 }
 
 .summary {
@@ -757,6 +745,115 @@ body.modal-open {
 .summary.error {
   color: var(--danger);
   font-weight: 600;
+}
+
+.cost-chart {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--metric-border);
+  border-radius: 10px;
+  background: var(--metric-bg);
+}
+
+.cost-chart[hidden] {
+  display: none;
+}
+
+.result-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.result-actions button[hidden] {
+  display: none;
+}
+
+.share-status {
+  min-height: 1.2em;
+  color: var(--ok);
+  font-size: 0.86rem;
+}
+
+.chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.chart-head h4,
+.chart-head p {
+  margin: 0;
+}
+
+.chart-head h4 {
+  color: var(--metric-value);
+  font: 600 1rem "Kanit", sans-serif;
+}
+
+.chart-head p {
+  color: var(--metric-title);
+  font-size: 0.84rem;
+}
+
+.chart-rows {
+  display: grid;
+  gap: 14px;
+}
+
+.chart-row-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  color: var(--metric-title);
+  font-size: 0.88rem;
+}
+
+.chart-row-heading strong {
+  color: var(--metric-value);
+}
+
+.chart-track {
+  height: 28px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--ghost-bg);
+}
+
+.chart-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 72px;
+  height: 100%;
+  padding-inline: 8px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #49a6dc, #2478b8);
+  transform-origin: left;
+  animation: chart-grow 520ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+
+.chart-row-best .chart-bar {
+  background: linear-gradient(90deg, #20a57e, #08775f);
+}
+
+.chart-best-badge {
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@keyframes chart-grow {
+  from {
+    transform: scaleX(0);
+    opacity: 0.4;
+  }
 }
 
 @keyframes results-pop {
@@ -799,6 +896,7 @@ body.modal-open {
   .results.result-ready,
   .result-ready .metric,
   .results.result-ready::after,
+  .chart-bar,
   #refreshRatesBtn.is-refreshing::before,
   #refreshRatesBtn.refresh-success {
     animation: none;
@@ -855,5 +953,12 @@ body.modal-open {
   .three-product-mode .cards,
   .three-product-mode .result-grid {
     grid-template-columns: 1fr;
+  }
+
+  .chart-head,
+  .chart-row-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
   }
 }
