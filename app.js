@@ -75,6 +75,8 @@ const I18N = {
       historyAt: "เวลา",
       historyRestore: "กดเพื่อเรียกค่ากลับมาแก้ไข",
       savedSetsTitle: "ชุดสินค้าที่บันทึก",
+      openSavedSets: "บันทึก",
+      closeSavedSets: "ปิด",
       setNamePlaceholder: "ชื่อชุดสินค้า",
       saveSet: "บันทึกชุดนี้",
       savedSetsEmpty: "ยังไม่มีชุดสินค้าที่บันทึก",
@@ -145,6 +147,8 @@ const I18N = {
       historyAt: "Time",
       historyRestore: "Click to restore and edit these values",
       savedSetsTitle: "Saved Product Sets",
+      openSavedSets: "Save",
+      closeSavedSets: "Close",
       setNamePlaceholder: "Set name",
       saveSet: "Save this set",
       savedSetsEmpty: "No saved product sets yet",
@@ -226,6 +230,7 @@ const ELEMENT_IDS = {
   clearHistoryBtn: "historyClear",
   historyEmpty: "historyEmpty",
   savedSetsTitle: "savedSetsTitle",
+  openSavedSetsBtn: "openSavedSets",
   saveSetBtn: "saveSet",
   exchangeStatusTitle: "exchangeStatusTitle",
   refreshRatesBtn: "refreshRates",
@@ -393,6 +398,7 @@ function applyLanguage() {
 
   renderHistory();
   document.getElementById("setNameInput").placeholder = t("setNamePlaceholder");
+  document.getElementById("closeSavedSetsBtn").setAttribute("aria-label", t("closeSavedSets"));
   renderSavedSets();
   renderExchangeStatus();
 }
@@ -487,6 +493,8 @@ function renderExchangeStatus() {
 async function refreshExchangeRates() {
   const button = document.getElementById("refreshRatesBtn");
   const status = document.getElementById("exchangeStatus");
+  button.classList.remove("refresh-success");
+  button.classList.add("is-refreshing");
   button.disabled = true;
   status.textContent = t("exchangeLoading");
 
@@ -518,9 +526,12 @@ async function refreshExchangeRates() {
       updatedAt: exchangeRatesUpdatedAt,
     }));
     ["A", "B", "C"].forEach(updateCurrencyUI);
+    button.classList.add("refresh-success");
+    window.setTimeout(() => button.classList.remove("refresh-success"), 900);
   } catch {
     exchangeRatesOnline = false;
   } finally {
+    button.classList.remove("is-refreshing");
     button.disabled = false;
     renderExchangeStatus();
   }
@@ -796,6 +807,20 @@ function saveCurrentProductSet() {
   renderSavedSets();
 }
 
+function openSavedSetsModal() {
+  const modal = document.getElementById("savedSetsModal");
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+  renderSavedSets();
+  document.getElementById("setNameInput").focus();
+}
+
+function closeSavedSetsModal() {
+  document.getElementById("savedSetsModal").hidden = true;
+  document.body.classList.remove("modal-open");
+  document.getElementById("openSavedSetsBtn").focus();
+}
+
 function restoreProductForm(prefix, product) {
   if (!product) {
     return;
@@ -831,6 +856,7 @@ function loadProductSet(id) {
   const summary = document.getElementById("summaryText");
   summary.classList.remove("win", "tie", "error");
   summary.textContent = t("summaryIdle");
+  closeSavedSetsModal();
 }
 
 function deleteProductSet(id) {
@@ -945,6 +971,8 @@ function init() {
 
   document.getElementById("calcBtn").addEventListener("click", calculate);
   document.getElementById("resetBtn").addEventListener("click", resetForm);
+  document.getElementById("openSavedSetsBtn").addEventListener("click", openSavedSetsModal);
+  document.getElementById("closeSavedSetsBtn").addEventListener("click", closeSavedSetsModal);
   document.getElementById("saveSetBtn").addEventListener("click", saveCurrentProductSet);
   document.getElementById("savedSetsList").addEventListener("click", handleSavedSetAction);
   document.getElementById("compareTwoLink").addEventListener("click", () => setComparisonMode("two"));
@@ -957,6 +985,16 @@ function init() {
   document.getElementById("themeLight").addEventListener("click", () => setTheme("light"));
   document.getElementById("themeDark").addEventListener("click", () => setTheme("dark"));
   document.getElementById("refreshRatesBtn").addEventListener("click", refreshExchangeRates);
+  document.getElementById("savedSetsModal").addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) {
+      closeSavedSetsModal();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !document.getElementById("savedSetsModal").hidden) {
+      closeSavedSetsModal();
+    }
+  });
   setComparisonMode("two");
   refreshExchangeRates();
 }

@@ -263,23 +263,17 @@
       <div class="actions">
         <button id="calcBtn" type="button">คำนวณความคุ้มค่า</button>
         <button id="resetBtn" type="button" class="ghost">ล้างค่า</button>
+        <button id="openSavedSetsBtn" type="button" class="ghost action-save">บันทึก</button>
       </div>
-
-      <section class="saved-sets" aria-labelledby="savedSetsTitle">
-        <div class="saved-sets-head">
-          <h3 id="savedSetsTitle">ชุดสินค้าที่บันทึก</h3>
-          <div class="save-set-controls">
-            <input id="setNameInput" type="text" maxlength="60" placeholder="ชื่อชุดสินค้า" />
-            <button id="saveSetBtn" type="button" class="ghost">บันทึกชุดนี้</button>
-          </div>
-        </div>
-        <div id="savedSetsList" class="saved-sets-list"></div>
-      </section>
     </section>
 
     <section class="results" id="results" aria-live="polite">
       <h3 id="resultTitle">ผลการเปรียบเทียบ</h3>
       <div class="result-grid">
+        <div class="metric wide result-summary">
+          <p class="metric-title" id="summaryTitle">สรุป</p>
+          <p class="summary" id="summaryText">กรอกข้อมูลแล้วกดคำนวณ</p>
+        </div>
         <div class="metric">
           <p class="metric-title" id="cpuATitle">ต้นทุนต่อหน่วยของ A</p>
           <p class="metric-value" id="cpuA">-</p>
@@ -291,10 +285,6 @@
         <div class="metric" id="metricC" hidden>
           <p class="metric-title" id="cpuCTitle">ต้นทุนต่อหน่วยของ C</p>
           <p class="metric-value" id="cpuC">-</p>
-        </div>
-        <div class="metric wide">
-          <p class="metric-title" id="summaryTitle">สรุป</p>
-          <p class="summary" id="summaryText">กรอกข้อมูลแล้วกดคำนวณ</p>
         </div>
       </div>
     </section>
@@ -309,6 +299,20 @@
       </ul>
     </section>
   </main>
+
+  <div id="savedSetsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="savedSetsTitle" hidden>
+    <section class="modal-card saved-sets">
+      <div class="saved-sets-head">
+        <h3 id="savedSetsTitle">ชุดสินค้าที่บันทึก</h3>
+        <button id="closeSavedSetsBtn" type="button" class="modal-close" aria-label="ปิด">×</button>
+      </div>
+      <div class="save-set-controls">
+        <input id="setNameInput" type="text" maxlength="60" placeholder="ชื่อชุดสินค้า" />
+        <button id="saveSetBtn" type="button" class="ghost">บันทึกชุดนี้</button>
+      </div>
+      <div id="savedSetsList" class="saved-sets-list"></div>
+    </section>
+  </div>
 
   <script src="app.js"></script>
 </body>
